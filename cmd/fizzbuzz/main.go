@@ -61,10 +61,10 @@ func (s *stats) handleFizzBuzz(rw http.ResponseWriter, r *http.Request) {
 	if err := setInt(values, "limit", 10, &c.Limit); err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
-	} else if err := setInt(values, "int1", 3, &c.X); err != nil {
+	} else if err := setInt(values, "int1", 2, &c.X); err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
-	} else if err := setInt(values, "int2", 5, &c.Y); err != nil {
+	} else if err := setInt(values, "int2", 3, &c.Y); err != nil {
 		http.Error(rw, err.Error(), http.StatusBadRequest)
 		return
 	}

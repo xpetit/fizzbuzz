@@ -14,7 +14,7 @@ const (
 )
 
 func writeTo(b *testing.B, limit int) {
-	c := Config{limit, 3, 5, "fizz", "buzz"}
+	c := Config{limit, 2, 3, "fizz", "buzz"}
 	for i := 0; i < b.N; i++ {
 		if _, err := c.WriteTo(io.Discard); err != nil {
 			b.Fatal(err)
@@ -23,7 +23,7 @@ func writeTo(b *testing.B, limit int) {
 }
 
 func encode(b *testing.B, limit int) {
-	c := Config{limit, 3, 5, "fizz", "buzz"}
+	c := Config{limit, 2, 3, "fizz", "buzz"}
 	for i := 0; i < b.N; i++ {
 		if err := json.NewEncoder(io.Discard).Encode(c.ToSlice()); err != nil {
 			b.Fatal(err)
