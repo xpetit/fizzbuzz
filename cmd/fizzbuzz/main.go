@@ -36,7 +36,7 @@ func main() {
 	api.HandleFunc("/v1/fizzbuzz", func(rw http.ResponseWriter, r *http.Request) {})
 	api.HandleFunc("/v1/statistics", func(rw http.ResponseWriter, r *http.Request) {})
 
-	// Spawn a goroutine that waits for a termination signal and then gracefully stops the HTTP server
+	// Spawn a goroutine that waits for a termination signal and then stops the HTTP server
 	go func() {
 		<-sig
 		log.Println("shutting down HTTP server")
