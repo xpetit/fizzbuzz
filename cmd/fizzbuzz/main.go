@@ -88,12 +88,12 @@ func (s *stats) handleFizzBuzz(rw http.ResponseWriter, r *http.Request) {
 func (s *stats) handleStats(rw http.ResponseWriter, r *http.Request) {
 	var result struct {
 		MostFrequent *fizzbuzz.Config `json:"most_frequent"`
+		Count        int              `json:"count"`
 	}
 	s.RLock()
-	var maxCount int
 	for f, count := range s.m {
-		if count > maxCount {
-			maxCount = count
+		if count > result.Count {
+			result.Count = count
 			f := f // shallow copy
 			result.MostFrequent = &f
 		}
