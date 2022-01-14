@@ -66,7 +66,7 @@ func (c *Config) writeTo(w io.Writer) (n int, err error) {
 	b, _ := json.Marshal(c.B)
 
 	// Iterate over all Fizz buzz values and write them
-	var buf []byte // buf is used to accumulate the bytes and write then all at once
+	var buf []byte // buf is used to accumulate the bytes and write them all at once
 	for i := 1; i <= c.Limit; i++ {
 		// Truncate the slice while keeping the underlying storage intact to avoid unnecessary memory allocations
 		buf = buf[:0]
