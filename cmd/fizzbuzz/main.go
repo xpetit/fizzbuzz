@@ -23,14 +23,18 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+	api := http.NewServeMux()
 	srv := http.Server{
 		Addr:         ":" + port,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
+		Handler:      logger(log.Default())(api),
 	}
 
-	http.HandleFunc("/v1/fizzbuzz", func(rw http.ResponseWriter, r *http.Request) {})
+	// Configure HTTP routing
+	api.HandleFunc("/v1/fizzbuzz", func(rw http.ResponseWriter, r *http.Request) {})
+	api.HandleFunc("/v1/statistics", func(rw http.ResponseWriter, r *http.Request) {})
 
 	// Spawn a goroutine that waits for a termination signal and then gracefully stops the HTTP server
 	go func() {
