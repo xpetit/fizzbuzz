@@ -90,7 +90,7 @@ func (c *Config) writeTo(w io.Writer) (n int, err error) {
 		}
 
 		// If we haven't reached the last Fizz buzz value, add a comma (the JSON array separator)
-		if i != c.Limit {
+		if i < c.Limit {
 			buf = append(buf, ',')
 		}
 
