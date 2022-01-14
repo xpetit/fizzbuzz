@@ -43,7 +43,8 @@ When the service is running, you can query with it with `curl`:
 ```console
 user@host$ curl localhost:8080/v1/fizzbuzz
 ["1","2","fizz","4","buzz","fizz","7","8","fizz","buzz"]
-user@host$
+user@host$ curl localhost:8080/v1/statistics
+{"most_frequent":{"limit":10,"int1":3,"int2":5,"str1":"fizz","str2":"buzz"}}
 ```
 
 ## Implementation
