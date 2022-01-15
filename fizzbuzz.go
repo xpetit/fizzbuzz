@@ -59,7 +59,7 @@ func (c *Config) WriteWith(w io.Writer) error {
 		return fmt.Errorf("%w: Int2 must be strictly positive", ErrInvalidInput)
 	}
 
-	if c.Limit == 0 {
+	if c.Limit < 1 {
 		// Fizz buzz starts with 1, so return an empty array
 		_, err := io.WriteString(w, "[]\n")
 		return err
