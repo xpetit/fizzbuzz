@@ -36,8 +36,8 @@ func main() {
 
 	// Configure HTTP routing
 	var s handlers.Stats
-	api.HandleFunc("/v1/fizzbuzz", s.HandleFizzBuzz)
-	api.HandleFunc("/v1/statistics", s.HandleStats)
+	api.HandleFunc("/api/v1/fizzbuzz", s.HandleFizzBuzz)
+	api.HandleFunc("/api/v1/statistics", s.HandleStats)
 
 	// Spawn a goroutine that waits for a termination signal and then stops the HTTP server
 	go func() {
