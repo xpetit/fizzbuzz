@@ -5,7 +5,8 @@ FizzBuzz is a Golang HTTP server exposing a RESTful web API.
 It exposes two endpoints:
 
 - `/api/v1/fizzbuzz`
-  - Accepts five query parameters : three integers `int1`, `int2` and `limit`, and two strings `str1` and `str2`.
+  - Accepts five optional query parameters : three integers `int1`, `int2` and `limit`, and two strings `str1` and `str2`.<br>
+    The default values are: `limit=10`, `int1=2`, `int2=3`, `str1=fizz`, `str2=buzz`.
   - Returns a list of strings with numbers from 1 to `limit`, where: all multiples of `int1` are replaced by `str1`, all multiples of `int2` are replaced by `str2`, all multiples of `int1` and `int2` are replaced by `str1str2`.
 - `/api/v1/statistics`
   - Accept no parameters
@@ -55,10 +56,12 @@ To stop the service, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
 When the service is running, you can query with it with `curl`:
 
 ```console
+user@host$ curl localhost:8080/api/v1/statistics
+{"most_frequent":null,"count":0}
 user@host$ curl localhost:8080/api/v1/fizzbuzz
 ["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]
 user@host$ curl localhost:8080/api/v1/statistics
-{"most_frequent":{"limit":10,"int1":3,"int2":5,"str1":"fizz","str2":"buzz"}}
+{"most_frequent":{"limit":10,"int1":2,"int2":3,"str1":"fizz","str2":"buzz"},"count":1}
 ```
 
 ## Implementation
