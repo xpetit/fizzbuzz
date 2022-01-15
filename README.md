@@ -76,3 +76,44 @@ This was discarded for the following reasons:
 
 1. If requirements change, it is easy to adapt the Fizz buzz algorithm because it is simple.
 2. As described in the [Performance](###Performance) section, a library that streams JSON strings and one that generates them all at once are a very different story. One cannot be the generalized/abstract version of another.
+
+### Performance & benchmarks
+
+For a Fizz buzz with a limit of one million, the naive approach (`WriteWith2`) takes about 5 times longer and uses 110 MB of memory, while the optimized implementation (`WriteWith`) does not allocate memory:
+
+```
+BenchmarkWriteWith/big-12    58    20081942 ns/op         142 B/op        9 allocs/op
+BenchmarkWriteWith2/big-12   12   100073916 ns/op   109733862 B/op   500030 allocs/op
+```
+
+However the biggest problem with the naive implementation is that it first generates the JSON array and then writes it, even if the writer has been closed before.
+This means that a buggy program looping through this API can create unnecessary work and resource exhaustion. The same is true for an attacker.
+The optimized implementation stops writing Fizz buzz values as soon as the API consumer no longer requests them.
+
+An average of 190 MB/s actual throughput and 400 MB/s theoretical maximum throughput was measured in the following dedicated benchmark environment:
+
+|     |                                                  |
+| --- | ------------------------------------------------ |
+| CPU | Intel Xeon E-2236 CPU @3.40GHz                   |
+| RAM | 32 GB ECC 2666 MHz                               |
+| OS  | Debian Stable (`scaling_governor = performance`) |
+| Go  | Version 1.17.5                                   |
+
+The command used to measure HTTP throughput:
+
+```
+curl -o /dev/null localhost:8080/api/v1/fizzbuzz?limit=10000000000
+```
+
+In addition, [`wrk`](https://github.com/wg/wrk) reports 221734 requests/second with a random limit between 1 and 100:
+
+```
+Running 10s test @ http://localhost:8080/api/v1/fizzbuzz?limit=param_value
+  4 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     2.14ms    2.52ms  29.34ms   85.42%
+    Req/Sec    55.99k     5.89k   71.20k    68.25%
+  2238244 requests in 10.09s, 0.99GB read
+Requests/sec: 221734.27
+Transfer/sec:    100.36MB
+```
