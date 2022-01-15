@@ -75,7 +75,7 @@ func (c *Config) WriteWith(w io.Writer) error {
 	a, _ := json.Marshal(c.Str1)
 	b, _ := json.Marshal(c.Str2)
 
-	// buf is used to accumulate the bytes for a Fizz buzz value
+	// buf is used to accumulate the bytes for a Fizz buzz JSON string
 	var buf []byte
 
 	// intBuf is a buffer big enough to hold math.MaxInt (9223372036854775807), used to format an int
