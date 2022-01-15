@@ -2,7 +2,7 @@
 
 FizzBuzz is a Golang HTTP server exposing a RESTful web API.
 
-It exposes two endpoints:
+It has two endpoints:
 
 - `/api/v1/fizzbuzz`
   - Accepts five optional query parameters : three integers `int1`, `int2` and `limit`, and two strings `str1` and `str2`.<br>
