@@ -71,9 +71,9 @@ func (c *Config) WriteWith(w io.Writer) error {
 	}
 
 	// Marshal JSON strings, it is safe to ignore the error because a string cannot cause one
-	ab, _ := json.Marshal(c.Str1 + c.Str2)
-	a, _ := json.Marshal(c.Str1)
-	b, _ := json.Marshal(c.Str2)
+	s12, _ := json.Marshal(c.Str1 + c.Str2)
+	s1, _ := json.Marshal(c.Str1)
+	s2, _ := json.Marshal(c.Str2)
 
 	// buf is used to accumulate the bytes for a Fizz buzz JSON string
 	var buf []byte
@@ -89,14 +89,14 @@ func (c *Config) WriteWith(w io.Writer) error {
 		if i%c.Int1 == 0 {
 			if i%c.Int2 == 0 {
 				// i is divisible by both Int1 and Int2, append Str1+Str2 JSON string
-				buf = append(buf, ab...)
+				buf = append(buf, s12...)
 			} else {
 				// i is only divisible by Int1, append Str1 JSON string
-				buf = append(buf, a...)
+				buf = append(buf, s1...)
 			}
 		} else if i%c.Int2 == 0 {
 			// i is only divisible by Int2, append Str2 JSON string
-			buf = append(buf, b...)
+			buf = append(buf, s2...)
 		} else {
 			// i is not divisible by either Int1 or Int2, append the current number i as a JSON string
 			buf = append(buf, '"')
