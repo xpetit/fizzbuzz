@@ -75,7 +75,7 @@ In writing this library, several considerations were taken into account:
 This was discarded for the following reasons:
 
 1. If requirements change, it is easy to adapt the Fizz buzz algorithm because it is simple.
-2. As described in the [Performance](###Performance) section, a library that streams JSON strings and one that generates them all at once are a very different story. One cannot be the generalized/abstract version of another.
+2. As described in the [Performance](#performance-&-benchmarks) section, a library that streams JSON strings and one that generates them all at once are a very different story. One cannot be the generalized/abstract version of another.
 
 ### Performance & benchmarks
 
