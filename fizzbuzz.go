@@ -82,7 +82,7 @@ func (c *Config) WriteWith(w io.Writer) error {
 	intBuf := make([]byte, 0, 19)
 
 	// Iterate over all Fizz buzz values and write them one by one
-	for i := 1; i <= c.Limit && i < math.MaxInt; i++ {
+	for i := 1; i <= c.Limit; i++ {
 		// Truncate the slice while keeping the underlying storage intact to avoid unnecessary memory allocations
 		buf = buf[:0]
 
@@ -112,6 +112,11 @@ func (c *Config) WriteWith(w io.Writer) error {
 		// Finally, write the buffer
 		if _, err := w.Write(buf); err != nil {
 			return err
+		}
+
+		// This prevents overflow
+		if i == math.MaxInt {
+			break
 		}
 	}
 	// Close JSON array and add a newline to be consistent with (*json.Encoder).Encode
