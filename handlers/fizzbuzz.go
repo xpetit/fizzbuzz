@@ -102,6 +102,9 @@ func (s *Stats) HandleStats(rw http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		jsonErr(rw, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
 		return
+	} else if len(r.URL.RawQuery) > 0 {
+		jsonErr(rw, "this endpoint takes no parameters", http.StatusBadRequest)
+		return
 	}
 
 	var result struct {
