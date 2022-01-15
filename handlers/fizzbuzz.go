@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -27,9 +29,6 @@ func setInt(values url.Values, key string, defaultValue int, p *int) error {
 			err := err.(*strconv.NumError)
 			return fmt.Errorf("parsing %s %q: %w", key, err.Num, err.Err)
 		}
-		if i < 1 {
-			return fmt.Errorf("setting %s to %d: must be strictly positive", key, i)
-		}
 		*p = i
 	} else {
 		*p = defaultValue
@@ -46,24 +45,37 @@ func setString(values url.Values, key, value string, p *string) {
 	}
 }
 
+func jsonErr(rw http.ResponseWriter, error string, code int) {
+	rw.WriteHeader(code)
+	json.NewEncoder(rw).Encode(struct {
+		Error string `json:"error"`
+	}{error})
+}
+
 // HandleFizzBuzz is an HTTP handler that answers with a JSON array containing the Fizz buzz values.
 // It accepts optional URL query parameters to change the default config.
 func (s *Stats) HandleFizzBuzz(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if r.Method != http.MethodGet {
+		jsonErr(rw, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
 	// Parse query parameters with default values
 	var c fizzbuzz.Config
 	values := r.URL.Query()
 	if err := setInt(values, "limit", 10, &c.Limit); err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		jsonErr(rw, err.Error(), http.StatusBadRequest)
 		return
-	} else if err := setInt(values, "int1", 2, &c.X); err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+	} else if err := setInt(values, "int1", 2, &c.Int1); err != nil {
+		jsonErr(rw, err.Error(), http.StatusBadRequest)
 		return
-	} else if err := setInt(values, "int2", 3, &c.Y); err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+	} else if err := setInt(values, "int2", 3, &c.Int2); err != nil {
+		jsonErr(rw, err.Error(), http.StatusBadRequest)
 		return
 	}
-	setString(values, "str1", "fizz", &c.A)
-	setString(values, "str2", "buzz", &c.B)
+	setString(values, "str1", "fizz", &c.Str1)
+	setString(values, "str2", "buzz", &c.Str2)
 
 	// Update fizzbuzz stats
 	s.Lock()
@@ -74,12 +86,24 @@ func (s *Stats) HandleFizzBuzz(rw http.ResponseWriter, r *http.Request) {
 	s.Unlock()
 
 	// Write fizzbuzz
-	c.WriteTo(rw)
+	if err := c.WriteWith(rw); err != nil {
+		if errors.Is(err, fizzbuzz.ErrInvalidInput) {
+			jsonErr(rw, err.Error(), http.StatusBadRequest)
+		} else {
+			log.Println("write error:", err)
+		}
+	}
 }
 
 // HandleStats is an HTTP handler that answers with a JSON object describing the most frequent Fizz buzz config
 // If no subsequent call to fizzbuzz has been made, the "most_frequent" object is null.
 func (s *Stats) HandleStats(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if r.Method != http.MethodGet {
+		jsonErr(rw, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
 	var result struct {
 		MostFrequent *fizzbuzz.Config `json:"most_frequent"`
 		Count        int              `json:"count"`

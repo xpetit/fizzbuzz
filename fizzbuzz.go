@@ -2,90 +2,105 @@ package fizzbuzz
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io"
+	"math"
 	"strconv"
 )
 
 type Config struct {
 	Limit int    `json:"limit"` // Limit is the last number (1 being the first)
-	X     int    `json:"int1"`  // X is the first divider
-	Y     int    `json:"int2"`  // Y is the second divider
-	A     string `json:"str1"`  // A is the string to use when the number is divisible by X
-	B     string `json:"str2"`  // B is the string to use when the number is divisible by Y
+	Int1  int    `json:"int1"`  // Int1 is the first divider
+	Int2  int    `json:"int2"`  // Int2 is the second divider
+	Str1  string `json:"str1"`  // Str1 is the string to use when the number is divisible by Int1
+	Str2  string `json:"str2"`  // Str2 is the string to use when the number is divisible by Int2
 }
 
+var ErrInvalidInput = errors.New("invalid input")
+
 func (c *Config) toString(i int) string {
-	if i%c.X == 0 {
-		if i%c.Y == 0 {
-			// i is divisible by both x and y
-			return c.A + c.B
+	if i%c.Int1 == 0 {
+		if i%c.Int2 == 0 {
+			// i is divisible by both Int1 and Int2
+			return c.Str1 + c.Str2
 		}
-		// i is only divisible by x
-		return c.A
+		// i is only divisible by Int1
+		return c.Str1
 	}
-	if i%c.Y == 0 {
-		// i is only divisible by y
-		return c.B
+	if i%c.Int2 == 0 {
+		// i is only divisible by Int2
+		return c.Str2
 	}
-	// i is not divisible by either x or y
+	// i is not divisible by either Int1 or Int2
 	return strconv.Itoa(i)
 }
 
-func (c *Config) ToSlice() (ss []string) {
+func (c *Config) WriteWith2(w io.Writer) error {
+	// Check the config validity
+	if c.Int1 < 1 {
+		return fmt.Errorf("%w: Int1 must be strictly positive", ErrInvalidInput)
+	} else if c.Int2 < 1 {
+		return fmt.Errorf("%w: Int2 must be strictly positive", ErrInvalidInput)
+	}
+
+	var ss []string
 	for i := 1; i <= c.Limit; i++ {
 		ss = append(ss, c.toString(i))
 	}
-	return
+	return json.NewEncoder(w).Encode(ss)
 }
 
-// Ensure type implements interface.
-var _ io.WriterTo = (*Config)(nil)
-
-func (c *Config) WriteTo(w io.Writer) (int64, error) {
-	n, err := c.writeTo(w)
-	return int64(n), err
-}
-
-func (c *Config) writeTo(w io.Writer) (n int, err error) {
+func (c *Config) WriteWith(w io.Writer) error {
 	// Check the config validity
-	if c.Limit < 1 {
-		// Fizz buzz starts with 1, so this is empty
-		return io.WriteString(w, "[]\n")
-	} else if c.X < 1 || c.Y < 1 {
-		panic("X and Y must be strictly positive")
+	if c.Int1 < 1 {
+		return fmt.Errorf("%w: Int1 must be strictly positive", ErrInvalidInput)
+	} else if c.Int2 < 1 {
+		return fmt.Errorf("%w: Int2 must be strictly positive", ErrInvalidInput)
+	}
+
+	if c.Limit == 0 {
+		// Fizz buzz starts with 1, so return an empty array
+		_, err := io.WriteString(w, "[]\n")
+		return err
 	}
 
 	// Open the JSON array
-	if n, err = io.WriteString(w, "["); err != nil {
-		return
+	if _, err := io.WriteString(w, "["); err != nil {
+		return err
 	}
 
 	// Marshal JSON strings, it is safe to ignore the error because a string cannot cause one
-	ab, _ := json.Marshal(c.A + c.B)
-	a, _ := json.Marshal(c.A)
-	b, _ := json.Marshal(c.B)
+	ab, _ := json.Marshal(c.Str1 + c.Str2)
+	a, _ := json.Marshal(c.Str1)
+	b, _ := json.Marshal(c.Str2)
 
-	// Iterate over all Fizz buzz values and write them
-	var buf []byte // buf is used to accumulate the bytes and write them all at once
-	for i := 1; i <= c.Limit; i++ {
+	// buf is used to accumulate the bytes for a Fizz buzz value
+	var buf []byte
+
+	// intBuf is a buffer big enough to hold math.MaxInt (9223372036854775807), used to format an int
+	intBuf := make([]byte, 0, 19)
+
+	// Iterate over all Fizz buzz values and write them one by one
+	for i := 1; i <= c.Limit && i < math.MaxInt; i++ {
 		// Truncate the slice while keeping the underlying storage intact to avoid unnecessary memory allocations
 		buf = buf[:0]
 
-		if i%c.X == 0 {
-			if i%c.Y == 0 {
-				// i is divisible by both X and Y, append A+B JSON string
+		if i%c.Int1 == 0 {
+			if i%c.Int2 == 0 {
+				// i is divisible by both Int1 and Int2, append Str1+Str2 JSON string
 				buf = append(buf, ab...)
 			} else {
-				// i is only divisible by X, append A JSON string
+				// i is only divisible by Int1, append Str1 JSON string
 				buf = append(buf, a...)
 			}
-		} else if i%c.Y == 0 {
-			// i is only divisible by Y, append B JSON string
+		} else if i%c.Int2 == 0 {
+			// i is only divisible by Int2, append Str2 JSON string
 			buf = append(buf, b...)
 		} else {
-			// i is not divisible by either X or Y, append the current number i as a JSON string
+			// i is not divisible by either Int1 or Int2, append the current number i as a JSON string
 			buf = append(buf, '"')
-			buf = append(buf, strconv.Itoa(i)...)
+			buf = append(buf, strconv.AppendInt(intBuf, int64(i), 10)...)
 			buf = append(buf, '"')
 		}
 
@@ -94,14 +109,12 @@ func (c *Config) writeTo(w io.Writer) (n int, err error) {
 			buf = append(buf, ',')
 		}
 
-		// Finally, write the buffer and update the number of bytes written
-		nn, err := w.Write(buf)
-		n += int(nn)
-		if err != nil {
-			return n, err
+		// Finally, write the buffer
+		if _, err := w.Write(buf); err != nil {
+			return err
 		}
 	}
 	// Close JSON array and add a newline to be consistent with (*json.Encoder).Encode
-	nn, err := io.WriteString(w, "]\n")
-	return n + nn, err
+	_, err := io.WriteString(w, "]\n")
+	return err
 }
