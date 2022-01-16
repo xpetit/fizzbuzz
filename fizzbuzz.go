@@ -44,7 +44,7 @@ func (c *Config) WriteInto2(w io.Writer) error {
 		return fmt.Errorf("%w: Int2 must be strictly positive", ErrInvalidInput)
 	}
 
-	var ss []string
+	ss := []string{}
 	for i := 1; i <= c.Limit; i++ {
 		ss = append(ss, c.toString(i))
 	}
