@@ -14,6 +14,7 @@ RUN go mod download
 # Build program
 COPY *.go ./
 COPY cmd cmd
+COPY handlers handlers
 # -ldflags "-s -w" reduces the binary size (-s: disable symbol table, -w: disable DWARF generation)
 RUN go build -ldflags "-s -w" ./cmd/fizzbuzz
 
