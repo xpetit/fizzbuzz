@@ -77,6 +77,8 @@ This was discarded for the following reasons:
 1. If requirements change, it is easy to adapt the Fizz buzz algorithm because it is simple.
 2. As described in the [Performance](#performance) section, a library that streams JSON strings and one that generates them all at once are a very different story. One cannot be the generalized/abstract version of another.
 
+![relevant XKCD](https://imgs.xkcd.com/comics/the_general_problem.png)
+
 ### Performance
 
 For a Fizz buzz with a limit of one million, the naive approach (`WriteInto2`) takes about 5 times longer and uses 110 MB of memory, while the optimized implementation (`WriteInto`) does not allocate memory:
