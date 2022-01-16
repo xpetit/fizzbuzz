@@ -79,11 +79,11 @@ This was discarded for the following reasons:
 
 ### Performance
 
-For a Fizz buzz with a limit of one million, the naive approach (`WriteWith2`) takes about 5 times longer and uses 110 MB of memory, while the optimized implementation (`WriteWith`) does not allocate memory:
+For a Fizz buzz with a limit of one million, the naive approach (`WriteInto2`) takes about 5 times longer and uses 110 MB of memory, while the optimized implementation (`WriteInto`) does not allocate memory:
 
 ```
-BenchmarkWriteWith/big-12    58    20081942 ns/op         142 B/op        9 allocs/op
-BenchmarkWriteWith2/big-12   12   100073916 ns/op   109733862 B/op   500030 allocs/op
+BenchmarkWriteInto/big-12    58    20081942 ns/op         142 B/op        9 allocs/op
+BenchmarkWriteInto2/big-12   12   100073916 ns/op   109733862 B/op   500030 allocs/op
 ```
 
 However the biggest problem with the naive implementation is that it first generates the JSON array and then writes it, even if the writer has been closed before.

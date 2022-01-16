@@ -36,7 +36,7 @@ func (c *Config) toString(i int) string {
 	return strconv.Itoa(i)
 }
 
-func (c *Config) WriteWith2(w io.Writer) error {
+func (c *Config) WriteInto2(w io.Writer) error {
 	// Check the config validity
 	if c.Int1 < 1 {
 		return fmt.Errorf("%w: Int1 must be strictly positive", ErrInvalidInput)
@@ -51,7 +51,7 @@ func (c *Config) WriteWith2(w io.Writer) error {
 	return json.NewEncoder(w).Encode(ss)
 }
 
-func (c *Config) WriteWith(w io.Writer) error {
+func (c *Config) WriteInto(w io.Writer) error {
 	// Check the config validity
 	if c.Int1 < 1 {
 		return fmt.Errorf("%w: Int1 must be strictly positive", ErrInvalidInput)
