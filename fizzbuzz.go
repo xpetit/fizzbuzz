@@ -20,6 +20,17 @@ type Config struct {
 // ErrInvalidInput is returned by WriteInto when attempting to write an invalid config
 var ErrInvalidInput = errors.New("invalid input")
 
+// Default returns a default configuration that gives all the values of the Fizz buzz
+func Default() *Config {
+	return &Config{
+		Limit: 10,
+		Int1:  2,
+		Int2:  3,
+		Str1:  "fizz",
+		Str2:  "buzz",
+	}
+}
+
 // toString returns the Fizz buzz value as a string corresponding to a number
 func (c *Config) toString(i int) string {
 	if i%c.Int1 == 0 {
