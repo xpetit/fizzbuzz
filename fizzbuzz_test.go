@@ -56,7 +56,7 @@ func runParallel(t *testing.T, name string, f func(t *testing.T)) bool {
 // Run the tests where WriteInto should fail and has a negative int2:
 // go test -run /fail/int2:-
 //
-// Run the test where WriteInto shouldn't write any value:
+// Run the tests where WriteInto shouldn't write any value:
 // test -v -run //limit:[0-]{1}
 //
 // For more information about subtests and sub-benchmarks, please visit https://go.dev/blog/subtests
