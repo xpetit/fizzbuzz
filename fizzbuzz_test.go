@@ -5,11 +5,20 @@ import (
 	"errors"
 	"io"
 	"math/rand"
+	"os"
 	"strings"
 	"testing"
 
 	"github.com/xpetit/fizzbuzz"
 )
+
+func Example() {
+	fizzbuzz.Default().WriteInto(os.Stdout)
+	(&fizzbuzz.Config{Limit: 15, Int1: 3, Int2: 5, Str1: "a", Str2: "b"}).WriteInto(os.Stdout)
+	// Output:
+	// ["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]
+	// ["1","2","a","4","b","a","7","8","a","b","11","a","13","14","ab"]
+}
 
 // write is a testing helper function that calls f and returns:
 // - what it wrote in a trimmed string
