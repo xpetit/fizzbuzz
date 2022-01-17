@@ -76,7 +76,7 @@ func TestWriteInto(t *testing.T) {
 			test(t, tc.name, func(t *testing.T) {
 				got, err := write(t, tc.input.WriteInto)
 				if err != nil {
-					t.Fatal(err)
+					t.Fatalf("WriteInto failed with the valid test case %#v, err: %v", tc.input, err)
 				}
 				if tc.expected != got {
 					t.Errorf("WriteInto give an unexpected result with %#v\nexpected: %s\ngot:      %s", tc.input, tc.expected, got)
@@ -103,7 +103,7 @@ func TestWriteInto(t *testing.T) {
 		}
 		test(t, "closed", func(t *testing.T) {
 			if err := fizzbuzz.Default().WriteInto(closed{}); err != errClosed {
-				t.Error("WriteInto should return the writer error", err)
+				t.Error("WriteInto should return the writer error, instead it returned", err)
 			}
 		})
 	})
