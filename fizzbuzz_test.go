@@ -155,7 +155,7 @@ func TestWriteInto(t *testing.T) {
 			`2`,
 			`12`,
 		}
-		for i := 0; i < 1000; i++ {
+		for i := 0; i < 100; i++ {
 			testCases = append(testCases, testCase{input: fizzbuzz.Config{
 				Limit: rand.Intn(100) - 10,    // between -10 and 89
 				Int1:  rand.Intn(100) - 10,    // between -10 and 89
