@@ -16,6 +16,7 @@ The server is:
 
 - Ready for production
 - Easy to maintain by other developers
+- Is not using external libraries (as requested)
 
 ## Usage
 
