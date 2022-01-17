@@ -41,13 +41,52 @@ docker run --rm --publish 8080:8080 github.com/xpetit/fizzbuzz
 
 When the service is running, you can query with it with `curl`:
 
-```console
-user@host$ curl localhost:8080/api/v1/fizzbuzz/stats
+```
+curl localhost:8080/api/v1/fizzbuzz/stats
+```
+
+<!-- prettier-ignore -->
+```json
 {"most_frequent":null,"count":0}
-user@host$ curl localhost:8080/api/v1/fizzbuzz
+```
+
+---
+
+Using the defaults:
+
+```
+curl localhost:8080/api/v1/fizzbuzz
+```
+
+<!-- prettier-ignore -->
+```json
 ["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]
-user@host$ curl localhost:8080/api/v1/fizzbuzz/stats
+```
+
+---
+
+The `most_frequent` object is now populated:
+
+```
+curl localhost:8080/api/v1/fizzbuzz/stats
+```
+
+<!-- prettier-ignore -->
+```json
 {"most_frequent":{"limit":10,"int1":2,"int2":3,"str1":"fizz","str2":"buzz"},"count":1}
+```
+
+---
+
+Custom request:
+
+```
+curl localhost:8080/api/v1/fizzbuzz -Gdlimit=15 -dint1=3 -dint2=5 -dstr1=buzz -dstr2=lightyear
+```
+
+<!-- prettier-ignore -->
+```json
+["1","2","buzz","4","lightyear","buzz","7","8","buzz","lightyear","11","buzz","13","14","buzzlightyear"]
 ```
 
 ## Design
