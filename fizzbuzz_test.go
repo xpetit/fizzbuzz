@@ -3,7 +3,6 @@ package fizzbuzz_test
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io"
 	"strings"
 	"testing"
@@ -57,7 +56,7 @@ func runParallel(t *testing.T, name string, f func(t *testing.T)) bool {
 // go test -run /fail/int2:-
 //
 // Run the tests where WriteInto shouldn't write any value:
-// test -v -run //limit:[0-]{1}
+// go test -run //limit:[0-]{1}
 //
 // For more information about subtests and sub-benchmarks, please visit https://go.dev/blog/subtests
 func TestWriteInto(t *testing.T) {
@@ -97,13 +96,11 @@ func TestWriteInto(t *testing.T) {
 	}
 	allTestCases := append(validCases, invalidCases...)
 
-	name := func(c fizzbuzz.Config) string { return strings.ToLower(fmt.Sprintf("%#v", c)) }
-
 	// tests valid configurations
 	runParallel(t, "pass", func(t *testing.T) {
 		for _, tc := range validCases {
 			tc := tc // capture range variable
-			runParallel(t, name(tc.input), func(t *testing.T) {
+			runParallel(t, tc.input.String(), func(t *testing.T) {
 				got, err := write(t, tc.input.WriteInto)
 				if err != nil {
 					t.Fatal("WriteInto failed:", err)
@@ -125,7 +122,7 @@ func TestWriteInto(t *testing.T) {
 		// tests invalid configurations
 		for _, tc := range invalidCases {
 			tc := tc // capture range variable
-			runParallel(t, name(tc.input), func(t *testing.T) {
+			runParallel(t, tc.input.String(), func(t *testing.T) {
 				if _, err := write(t, tc.input.WriteInto); !errors.Is(err, fizzbuzz.ErrInvalidInput) {
 					t.Error("WriteInto should return an ErrInvalidInput")
 				}
@@ -144,7 +141,7 @@ func TestWriteInto(t *testing.T) {
 		}
 		for _, tc := range testCases {
 			tc := tc // capture range variable
-			runParallel(t, name(tc.input), func(t *testing.T) {
+			runParallel(t, tc.input.String(), func(t *testing.T) {
 				// make sure that WriteInto and WriteInto2 behave in the same way
 				b1, err1 := write(t, tc.input.WriteInto)
 				b2, err2 := write(t, tc.input.WriteInto2)

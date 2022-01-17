@@ -7,6 +7,7 @@ import (
 	"io"
 	"math"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -19,6 +20,14 @@ type Config struct {
 
 // ErrInvalidInput is returned by WriteInto when attempting to write an invalid config
 var ErrInvalidInput = errors.New("invalid input")
+
+// String formats the configuration, example:
+//   (&fizzbuzz.Config{Limit: 10, Int1: 2, Int2: 3, Str1: "fizz", Str2: "buzz"}).String()
+// returns
+//   `&fizzbuzz.config{limit:10,int1:2,int2:3,str1:"fizz",str2:"buzz"}`
+func (c *Config) String() string {
+	return strings.ToLower(strings.ReplaceAll(fmt.Sprintf("%#v", c), " ", ""))
+}
 
 // Default returns a default configuration that gives all the values of the Fizz buzz
 func Default() *Config {
