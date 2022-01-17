@@ -40,6 +40,7 @@ func mustWrite(t *testing.T, f func(w io.Writer) error) string {
 	return s
 }
 
+// compare asserts that WriteInto and WriteInto2 behave in the same way
 func compare(t *testing.T, c Config) {
 	t.Helper()
 	b1, err1 := write(t, c.WriteInto)
@@ -58,6 +59,7 @@ func compare(t *testing.T, c Config) {
 	}
 }
 
+// TestWriteIntoCompare tests WriteInto and WriteInto2 side by side, reporting any inconsistencies.
 func TestWriteIntoCompare(t *testing.T) {
 	for i := -10; i < 100; i++ {
 		i := i
@@ -79,7 +81,8 @@ func TestWriteIntoCompare(t *testing.T) {
 	compare(t, Config{3, 2, 3, `"`, `"`})
 }
 
-func TestWriteInto(t *testing.T) {
+// TestWriteIntoValid tests valid configurations
+func TestWriteIntoValid(t *testing.T) {
 	validCases := []struct {
 		input    Config
 		expected string
