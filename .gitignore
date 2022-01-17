@@ -7,6 +7,9 @@
 # Include Dockerfile
 !Dockerfile
 
+# Include LICENSE
+!LICENSE
+
 # Created by https://www.toptal.com/developers/gitignore/api/go,goland,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=go,goland,visualstudiocode
 
