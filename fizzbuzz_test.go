@@ -123,10 +123,10 @@ func TestWriteInto(t *testing.T) {
 			{fizzbuzz.Config{3, 2, 3, "", ""}, "", "number,str1,str2"},
 			{fizzbuzz.Config{3, 2, 3, `"`, `"`}, "", "number,str1_escaped,str2_escaped"},
 		}
-		for i := -10; i < 100; i++ {
+		for limit := -10; limit < 100; limit++ {
 			d := fizzbuzz.Default()
-			d.Limit = i
-			testCases = append(testCases, testCase{*d, "", fmt.Sprint("limit_", i)})
+			d.Limit = limit
+			testCases = append(testCases, testCase{*d, "", fmt.Sprint("limit_", limit)})
 		}
 		for _, tc := range testCases {
 			tc := tc
