@@ -50,52 +50,66 @@ func test(t *testing.T, name string, f func(t *testing.T)) {
 // TestWriteInto tests the WriteInto function with valid, invalid configurations and compares it to WriteInto2.
 // It uses the subtests introduced in Go 1.7, which gives fine-grained control over which test(s) to run.
 //
-// Run the comparision of the generated test case with a limit of 9:
-// go test -run /compare/limit_9$  # Note the EOL regex symbol '$' to avoid matching "limit_90"
-//
-// Run the test where WriteInto should fail because of a negative int2:
-// go test -run /fail/^negative_int2$
+// Run the comparison of the generated test case with a limit of 9:
+// go test -run '/compare/limit:9\b'  # Note the word-boundary regex anchor '\b' to avoid matching "limit:91"
 //
 // Run the tests where WriteInto should fail and has a negative int2:
-// go test -run /fail/negative_int2
+// go test -run /fail/int2:-
 //
 // Run the test where WriteInto shouldn't write any value:
-// go test -run //empty
+// test -v -run //limit:[0-]{1}
 //
 // For more information about subtests and sub-benchmarks, please visit https://go.dev/blog/subtests
 func TestWriteInto(t *testing.T) {
 	type testCase struct {
 		input    fizzbuzz.Config
 		expected string
-		name     string
 	}
+	validCases := []testCase{
+		{fizzbuzz.Config{-1, 1, 1, "", ""}, `[]`},
+		{fizzbuzz.Config{-1, 1, 1, "a", ""}, `[]`},
+		{fizzbuzz.Config{-1, 1, 1, "a", "a"}, `[]`},
+		{fizzbuzz.Config{0, 1, 1, "", ""}, `[]`},
+		{fizzbuzz.Config{0, 1, 1, "", "a"}, `[]`},
+		{fizzbuzz.Config{1, 1, 1, "", ""}, `[""]`},
+		{fizzbuzz.Config{1, 1, 1, "", "a"}, `["a"]`},
+		{fizzbuzz.Config{1, 1, 1, "a", ""}, `["a"]`},
+		{fizzbuzz.Config{1, 1, 1, "a", "b"}, `["ab"]`},
+		{fizzbuzz.Config{1, 2, 2, "", ""}, `["1"]`},
+		{fizzbuzz.Config{1, 2, 3, "", ""}, `["1"]`},
+		{fizzbuzz.Config{2, 1, 2, "a", "b"}, `["a","ab"]`},
+		{fizzbuzz.Config{2, 2, 3, "a", "b"}, `["1","a"]`},
+		{fizzbuzz.Config{2, 3, 1, "a", "b"}, `["b","b"]`},
+		{fizzbuzz.Config{2, 3, 3, "a", "b"}, `["1","2"]`},
+		{fizzbuzz.Config{3, 3, 3, "a", "b"}, `["1","2","ab"]`},
+		{fizzbuzz.Config{3, 3, 4, "a", "b"}, `["1","2","a"]`},
+		{fizzbuzz.Config{4, 3, 4, "a", "b"}, `["1","2","a","b"]`},
+		{fizzbuzz.Config{6, 2, 3, "a", "b"}, `["1","a","b","a","5","ab"]`},
+		{fizzbuzz.Config{1, 1, 1, `"`, ""}, `["\""]`},
+		{fizzbuzz.Config{13, 3, 4, "fizz", "buzz"}, `["1","2","fizz","buzz","5","fizz","7","buzz","fizz","10","11","fizzbuzz","13"]`},
+		{*fizzbuzz.Default(), `["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]`},
+	}
+	invalidCases := []testCase{
+		{input: fizzbuzz.Config{-1, -1, -1, "", ""}},
+		{input: fizzbuzz.Config{1, -1, -1, "", ""}},
+		{input: fizzbuzz.Config{1, -1, 1, "", ""}},
+		{input: fizzbuzz.Config{1, 1, -1, "", ""}},
+	}
+	allTestCases := append(validCases, invalidCases...)
+
+	name := func(c fizzbuzz.Config) string { return strings.ToLower(fmt.Sprintf("%#v", c)) }
 
 	// tests valid configurations
 	test(t, "pass", func(t *testing.T) {
-		validCases := []testCase{
-			{fizzbuzz.Config{0, 1, 1, "", "a"}, `[]`, "empty"},
-			{fizzbuzz.Config{1, 1, 1, "", ""}, `[""]`, "str1str2"},
-			{fizzbuzz.Config{1, 2, 2, "", ""}, `["1"]`, "number"},
-			{fizzbuzz.Config{1, 1, 1, "", "a"}, `["a"]`, "str1str2"},
-			{fizzbuzz.Config{1, 1, 1, "a", ""}, `["a"]`, "str1str2"},
-			{fizzbuzz.Config{1, 1, 1, "a", "b"}, `["ab"]`, "str1str2"},
-			{fizzbuzz.Config{2, 1, 2, "a", "b"}, `["a","ab"]`, "str1,str1str2"},
-			{fizzbuzz.Config{2, 3, 1, "a", "b"}, `["b","b"]`, "str2,str2"},
-			{fizzbuzz.Config{2, 2, 3, "a", "b"}, `["1","a"]`, "number,str1"},
-			{fizzbuzz.Config{2, 3, 3, "a", "b"}, `["1","2"]`, "number,number"},
-			{fizzbuzz.Config{1, 1, 1, `"`, ""}, `["\""]`, "str1_escaped)"},
-			{fizzbuzz.Config{13, 3, 4, "fizz", "buzz"}, `["1","2","fizz","buzz","5","fizz","7","buzz","fizz","10","11","fizzbuzz","13"]`, "complete_suite"},
-			{*fizzbuzz.Default(), `["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]`, "default_suite"},
-		}
 		for _, tc := range validCases {
 			tc := tc // capture range variable
-			test(t, tc.name, func(t *testing.T) {
+			test(t, name(tc.input), func(t *testing.T) {
 				got, err := write(t, tc.input.WriteInto)
 				if err != nil {
-					t.Fatalf("WriteInto failed with the valid test case %#v, err: %v", tc.input, err)
+					t.Fatal("WriteInto failed:", err)
 				}
 				if tc.expected != got {
-					t.Errorf("WriteInto give an unexpected result with %#v\nexpected: %s\ngot:      %s", tc.input, tc.expected, got)
+					t.Errorf("expected: %s, got: %s", tc.expected, got)
 				}
 			})
 		}
@@ -104,22 +118,16 @@ func TestWriteInto(t *testing.T) {
 	test(t, "fail", func(t *testing.T) {
 		test(t, "closed", func(t *testing.T) {
 			if err := fizzbuzz.Default().WriteInto(closed{}); err != errClosed {
-				t.Error("WriteInto should return the writer error, instead it returned", err)
+				t.Error("WriteInto should return the writer error, instead it returned:", err)
 			}
 		})
 
 		// tests invalid configurations
-		invalidCases := []testCase{
-			{fizzbuzz.Config{-1, -1, -1, "", ""}, "", "negative_int1,negative_int2"},
-			{fizzbuzz.Config{1, -1, -1, "", ""}, "", "negative_int1,negative_int2"},
-			{fizzbuzz.Config{1, -1, 1, "", ""}, "", "negative_int1"},
-			{fizzbuzz.Config{1, 1, -1, "", ""}, "", "negative_int2"},
-		}
 		for _, tc := range invalidCases {
 			tc := tc // capture range variable
-			test(t, tc.name, func(t *testing.T) {
+			test(t, name(tc.input), func(t *testing.T) {
 				if _, err := write(t, tc.input.WriteInto); !errors.Is(err, fizzbuzz.ErrInvalidInput) {
-					t.Errorf("WriteInto should return an ErrInvalidInput with %#v", tc.input)
+					t.Error("WriteInto should return an ErrInvalidInput")
 				}
 			})
 		}
@@ -127,41 +135,29 @@ func TestWriteInto(t *testing.T) {
 
 	// tests WriteInto and WriteInto2 side by side, reporting any inconsistencies
 	test(t, "compare", func(t *testing.T) {
-		testCases := []testCase{
-			{fizzbuzz.Config{-1, 1, 1, "", ""}, "", "empty"},
-			{fizzbuzz.Config{-1, -1, -1, "", ""}, "", "negative_int1,negative_int2"},
-			{fizzbuzz.Config{1, -1, -1, "", ""}, "", "negative_int1,negative_int2"},
-			{fizzbuzz.Config{1, -1, 1, "", ""}, "", "negative_int1"},
-			{fizzbuzz.Config{1, 1, -1, "", ""}, "", "negative_int2"},
-			{fizzbuzz.Config{0, 1, 1, "", ""}, "", "empty"},
-			{fizzbuzz.Config{1, 1, 1, "", ""}, "", "str1"},
-			{fizzbuzz.Config{1, 2, 3, "", ""}, "", "number"},
-			{fizzbuzz.Config{2, 2, 3, "", ""}, "", "number,str1"},
-			{fizzbuzz.Config{3, 2, 3, "", ""}, "", "number,str1,str2"},
-			{fizzbuzz.Config{3, 2, 3, `"`, `"`}, "", "number,str1_escaped,str2_escaped"},
-		}
+		testCases := append([]testCase(nil), allTestCases...) // copy all test cases
+		// add valid test cases with a variable limit
 		for limit := -10; limit < 100; limit++ {
 			d := fizzbuzz.Default()
 			d.Limit = limit
-			testCases = append(testCases, testCase{*d, "", fmt.Sprint("limit_", limit)})
+			testCases = append(testCases, testCase{input: *d})
 		}
 		for _, tc := range testCases {
 			tc := tc // capture range variable
-			test(t, tc.name, func(t *testing.T) {
+			test(t, name(tc.input), func(t *testing.T) {
 				// make sure that WriteInto and WriteInto2 behave in the same way
 				b1, err1 := write(t, tc.input.WriteInto)
 				b2, err2 := write(t, tc.input.WriteInto2)
-				format := "WriteInto and WriteInto2 give different results with %#v\nWriteInto:  %s\nWriteInto2: %s"
 				if err1 == nil && err2 != nil {
-					t.Errorf(format, tc.input, b1, err2)
+					t.Errorf("WriteInto: %s, WriteInto2: %s", b1, err2)
 				} else if err1 != nil && err2 == nil {
-					t.Errorf(format, tc.input, err1, b2)
+					t.Errorf("WriteInto: %s, WriteInto2: %s", err1, b2)
 				} else if err1 != nil && err2 != nil {
 					if errors.Is(err1, fizzbuzz.ErrInvalidInput) != errors.Is(err2, fizzbuzz.ErrInvalidInput) {
-						t.Errorf(format, tc.input, err1, err2)
+						t.Errorf("WriteInto: %s, WriteInto2: %s", err1, err2)
 					}
 				} else if b1 != b2 {
-					t.Errorf(format, tc.input, b1, b2)
+					t.Errorf("WriteInto: %s, WriteInto2: %s", b1, b2)
 				}
 			})
 		}
