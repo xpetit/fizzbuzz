@@ -16,7 +16,7 @@ COPY *.go ./
 COPY cmd cmd
 COPY handlers handlers
 # -ldflags "-s -w" reduces the binary size (-s: disable symbol table, -w: disable DWARF generation)
-RUN go build -ldflags "-s -w" ./cmd/fizzbuzz
+RUN go build -ldflags "-s -w" ./cmd/fizzbuzzd
 
 
 FROM alpine
@@ -27,8 +27,8 @@ RUN adduser -D user
 USER user:user
 
 # Copy binary
-ENTRYPOINT ["/app/fizzbuzz"]
-COPY --from=builder /app/fizzbuzz /app/fizzbuzz
+ENTRYPOINT ["/app/fizzbuzzd"]
+COPY --from=builder /app/fizzbuzzd /app/fizzbuzzd
 
 # The HTTP listening port is both configurable at build-time (image) and runtime (container):
 #   docker build --build-arg PORT=8081 --tag github.com/xpetit/fizzbuzz
