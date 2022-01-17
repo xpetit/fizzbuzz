@@ -11,14 +11,16 @@ import (
 
 type Config struct {
 	Limit int    `json:"limit"` // Limit is the last number (1 being the first)
-	Int1  int    `json:"int1"`  // Int1 is the first divider
-	Int2  int    `json:"int2"`  // Int2 is the second divider
+	Int1  int    `json:"int1"`  // Int1 is the first divisor
+	Int2  int    `json:"int2"`  // Int2 is the second divisor
 	Str1  string `json:"str1"`  // Str1 is the string to use when the number is divisible by Int1
 	Str2  string `json:"str2"`  // Str2 is the string to use when the number is divisible by Int2
 }
 
+// ErrInvalidInput is returned by WriteInto when attempting to write an invalid config
 var ErrInvalidInput = errors.New("invalid input")
 
+// toString returns the Fizz buzz value as a string corresponding to a number
 func (c *Config) toString(i int) string {
 	if i%c.Int1 == 0 {
 		if i%c.Int2 == 0 {
@@ -36,6 +38,7 @@ func (c *Config) toString(i int) string {
 	return strconv.Itoa(i)
 }
 
+// WriteInto2 is a naive implementation or WriteInto.
 func (c *Config) WriteInto2(w io.Writer) error {
 	// Check the config validity
 	if c.Int1 < 1 {
@@ -51,6 +54,10 @@ func (c *Config) WriteInto2(w io.Writer) error {
 	return json.NewEncoder(w).Encode(ss)
 }
 
+// WriteInto writes a list of Fizz buzz values as a JSON array of strings, followed by a newline character.
+//
+// Attempting to write a Fizz buzz with negative or zero divisors causes WriteInto to return an ErrInvalidInput.
+// Any other errors reported may be due to w.WriteString or w.Write.
 func (c *Config) WriteInto(w io.Writer) error {
 	// Check the config validity
 	if c.Int1 < 1 {

@@ -42,14 +42,14 @@ func main() {
 	// Spawn a goroutine that waits for a termination signal and then stops the HTTP server
 	go func() {
 		<-sig
-		log.Println("shutting down HTTP server")
+		log.Println("Shutting down HTTP server")
 		if err := srv.Shutdown(context.Background()); err != nil {
 			log.Fatalln(err)
 		}
 	}()
 
 	// Start the HTTP server
-	log.Println("listening on port:", port)
+	log.Println("Listening on port:", port, "You can customize it with PORT environment variable")
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
 		log.Fatalln(err)
 	}

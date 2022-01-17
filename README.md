@@ -1,6 +1,6 @@
 # FizzBuzz
 
-FizzBuzz is a Golang HTTP server exposing a RESTful web API.
+FizzBuzz is a Golang HTTP server exposing a RESTful web API that provides a [Fizz buzz](https://en.wikipedia.org/wiki/Fizz_buzz) service.
 
 It has two endpoints:
 
@@ -63,6 +63,15 @@ This was discarded for the following reasons:
 2. As described in the [Performance](#performance) section, a library that streams JSON strings and one that generates them all at once are a very different story. One cannot be the generalized/abstract version of another.
 
 ![relevant XKCD](https://imgs.xkcd.com/comics/the_general_problem.png)
+
+### Packages
+
+- `github.com/xpetit/fizzbuzz/cmd/fizzbuzzd`<br>
+  The main program, running the HTTP server.
+- `github.com/xpetit/fizzbuzz/handlers`<br>
+  The HTTP handlers.
+- `github.com/xpetit/fizzbuzz`<br>
+  The Fizz buzz writer `WriteInto`.
 
 ### Performance
 
