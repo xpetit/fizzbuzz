@@ -17,41 +17,26 @@ The server is:
 - Ready for production
 - Easy to maintain by other developers
 
-## Build from source
+## Usage
 
 Requirements:
 
 - [Go 1.17 or newer](https://golang.org/dl/)
 
+Use this command to directly update and run the service:
+
 ```
-go build ./cmd/fizzbuzz
+GOPROXY=direct go run github.com/xpetit/fizzbuzz/cmd/fizzbuzz@latest
 ```
 
-## Build Docker image
+To stop it, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
+
+If you don't trust this program, you can use Docker, clone this repository and run the following commands inside:
 
 ```
 docker build --tag github.com/xpetit/fizzbuzz .
-```
-
-## Start service
-
-If you have followed [Build from source](#Build-from-source):
-
-```
-./fizzbuzz
-```
-
-Or if you have followed [Build Docker image](#Build-Docker-image):
-
-```
 docker run --rm --publish 8080:8080 github.com/xpetit/fizzbuzz
 ```
-
-## Stop service
-
-To stop the service, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
-
-## Usage
 
 When the service is running, you can query with it with `curl`:
 
