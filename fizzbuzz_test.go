@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"io"
+	"math/rand"
 	"strings"
 	"testing"
 
@@ -96,7 +97,7 @@ func TestWriteInto(t *testing.T) {
 	}
 	allTestCases := append(validCases, invalidCases...)
 
-	// tests valid configurations
+	// tests valid cases (WriteInto should not return an error)
 	runParallel(t, "pass", func(t *testing.T) {
 		for _, tc := range validCases {
 			tc := tc // capture range variable
@@ -112,6 +113,7 @@ func TestWriteInto(t *testing.T) {
 		}
 	})
 
+	// tests invalid cases (WriteInto should return an error)
 	runParallel(t, "fail", func(t *testing.T) {
 		runParallel(t, "closed", func(t *testing.T) {
 			if err := fizzbuzz.Default().WriteInto(closed{}); err != errClosed {
@@ -133,12 +135,36 @@ func TestWriteInto(t *testing.T) {
 	// tests WriteInto and WriteInto2 side by side, reporting any inconsistencies
 	runParallel(t, "compare", func(t *testing.T) {
 		testCases := append([]testCase(nil), allTestCases...) // copy all test cases
+
 		// add valid test cases with a variable limit
 		for limit := -10; limit < 100; limit++ {
 			d := fizzbuzz.Default()
 			d.Limit = limit
 			testCases = append(testCases, testCase{input: *d})
 		}
+
+		// add random test cases
+		ss := []string{
+			``,
+			`a`,
+			`"`,
+			`"""""`,
+			"\u2063", // Invisible Separator
+			`abc`,
+			`1`,
+			`2`,
+			`12`,
+		}
+		for i := 0; i < 1000; i++ {
+			testCases = append(testCases, testCase{input: fizzbuzz.Config{
+				Limit: rand.Intn(100) - 10,    // between -10 and 89
+				Int1:  rand.Intn(100) - 10,    // between -10 and 89
+				Int2:  rand.Intn(100) - 10,    // between -10 and 89
+				Str1:  ss[rand.Intn(len(ss))], // pick a random string from ss
+				Str2:  ss[rand.Intn(len(ss))], // pick a random string from ss
+			}})
+		}
+
 		for _, tc := range testCases {
 			tc := tc // capture range variable
 			runParallel(t, tc.input.String(), func(t *testing.T) {
