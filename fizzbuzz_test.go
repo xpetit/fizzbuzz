@@ -12,7 +12,7 @@ import (
 // write is a testing helper function that calls f and returns:
 // - what it wrote in a trimmed string
 // - an error if one occured
-// It also checks that there is one and only one final newline.
+// It also asserts that there is one and only one final newline.
 func write(t *testing.T, f func(w io.Writer) error) (string, error) {
 	t.Helper()
 	var buf bytes.Buffer
