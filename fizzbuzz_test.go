@@ -39,7 +39,7 @@ var errClosed = errors.New("writer is closed")
 
 func (closed) Write([]byte) (int, error) { return 0, errClosed }
 
-// runParallel runs a parallel subtest
+// runParallel runs a parallel subtest.
 func runParallel(t *testing.T, name string, f func(t *testing.T)) bool {
 	return t.Run(name, func(t *testing.T) {
 		t.Parallel()
@@ -134,6 +134,10 @@ func TestWriteInto(t *testing.T) {
 
 	// tests WriteInto and WriteInto2 side by side, reporting any inconsistencies
 	runParallel(t, "compare", func(t *testing.T) {
+		if testing.Short() {
+			t.SkipNow()
+		}
+
 		testCases := append([]testCase(nil), allTestCases...) // copy all test cases
 
 		// add valid test cases with a variable limit
