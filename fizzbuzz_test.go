@@ -48,7 +48,7 @@ func test(t *testing.T, name string, f func(t *testing.T)) {
 }
 
 // TestWriteInto tests the WriteInto function with valid, invalid configurations and compares it to WriteInto2.
-// It uses the subtests introduced in Go 1.7, which gives fine control over the test(s) to be executed.
+// It uses the subtests introduced in Go 1.7, which gives fine-grained control over which test(s) to run.
 //
 // Run the comparision of the generated test case with a limit of 9:
 // go test -run /compare/limit_9$  # Note the EOL regex symbol '$' to avoid matching "limit_90"
