@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-// write is testing helper function that calls f and returns:
+// write is a testing helper function that calls f and returns:
 // - what it wrote in a trimmed string
 // - an error if one occured
 // It also checks that there is one and only one final newline.
