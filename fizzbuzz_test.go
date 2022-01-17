@@ -39,8 +39,8 @@ var errClosed = errors.New("writer is closed")
 
 func (closed) Write([]byte) (int, error) { return 0, errClosed }
 
-// test runs a parallel subtest
-func test(t *testing.T, name string, f func(t *testing.T)) {
+// runParallel runs a parallel subtest
+func runParallel(t *testing.T, name string, f func(t *testing.T)) {
 	t.Run(name, func(t *testing.T) {
 		t.Parallel()
 		f(t)
@@ -100,10 +100,10 @@ func TestWriteInto(t *testing.T) {
 	name := func(c fizzbuzz.Config) string { return strings.ToLower(fmt.Sprintf("%#v", c)) }
 
 	// tests valid configurations
-	test(t, "pass", func(t *testing.T) {
+	runParallel(t, "pass", func(t *testing.T) {
 		for _, tc := range validCases {
 			tc := tc // capture range variable
-			test(t, name(tc.input), func(t *testing.T) {
+			runParallel(t, name(tc.input), func(t *testing.T) {
 				got, err := write(t, tc.input.WriteInto)
 				if err != nil {
 					t.Fatal("WriteInto failed:", err)
@@ -115,8 +115,8 @@ func TestWriteInto(t *testing.T) {
 		}
 	})
 
-	test(t, "fail", func(t *testing.T) {
-		test(t, "closed", func(t *testing.T) {
+	runParallel(t, "fail", func(t *testing.T) {
+		runParallel(t, "closed", func(t *testing.T) {
 			if err := fizzbuzz.Default().WriteInto(closed{}); err != errClosed {
 				t.Error("WriteInto should return the writer error, instead it returned:", err)
 			}
@@ -125,7 +125,7 @@ func TestWriteInto(t *testing.T) {
 		// tests invalid configurations
 		for _, tc := range invalidCases {
 			tc := tc // capture range variable
-			test(t, name(tc.input), func(t *testing.T) {
+			runParallel(t, name(tc.input), func(t *testing.T) {
 				if _, err := write(t, tc.input.WriteInto); !errors.Is(err, fizzbuzz.ErrInvalidInput) {
 					t.Error("WriteInto should return an ErrInvalidInput")
 				}
@@ -134,7 +134,7 @@ func TestWriteInto(t *testing.T) {
 	})
 
 	// tests WriteInto and WriteInto2 side by side, reporting any inconsistencies
-	test(t, "compare", func(t *testing.T) {
+	runParallel(t, "compare", func(t *testing.T) {
 		testCases := append([]testCase(nil), allTestCases...) // copy all test cases
 		// add valid test cases with a variable limit
 		for limit := -10; limit < 100; limit++ {
@@ -144,7 +144,7 @@ func TestWriteInto(t *testing.T) {
 		}
 		for _, tc := range testCases {
 			tc := tc // capture range variable
-			test(t, name(tc.input), func(t *testing.T) {
+			runParallel(t, name(tc.input), func(t *testing.T) {
 				// make sure that WriteInto and WriteInto2 behave in the same way
 				b1, err1 := write(t, tc.input.WriteInto)
 				b2, err2 := write(t, tc.input.WriteInto2)
