@@ -32,28 +32,36 @@ func write(t *testing.T, f func(w io.Writer) error) (string, error) {
 	return s[:i], nil // trims final newline
 }
 
+// closed implements io.Writer and always returns a errClosed error.
 type closed struct{}
 
 var errClosed = errors.New("writer is closed")
 
 func (closed) Write([]byte) (int, error) { return 0, errClosed }
 
+// test runs a parallel subtest
+func test(t *testing.T, name string, f func(t *testing.T)) {
+	t.Run(name, func(t *testing.T) {
+		t.Parallel()
+		f(t)
+	})
+}
+
 func TestWriteInto(t *testing.T) {
-	t.Parallel()
+	type testCase struct {
+		input    fizzbuzz.Config
+		expected string
+		name     string
+	}
 
 	// tests valid configurations
-	t.Run("pass", func(t *testing.T) {
-		t.Parallel()
-		validCases := []struct {
-			input    fizzbuzz.Config
-			expected string
-			name     string
-		}{
-			{fizzbuzz.Config{0, 1, 1, "", ""}, `[]`, "empty"},
-			{fizzbuzz.Config{1, 1, 1, "", ""}, `[""]`, "str1"},
+	test(t, "pass", func(t *testing.T) {
+		validCases := []testCase{
+			{fizzbuzz.Config{0, 1, 1, "", "a"}, `[]`, "empty"},
+			{fizzbuzz.Config{1, 1, 1, "", ""}, `[""]`, "str1str2"},
 			{fizzbuzz.Config{1, 2, 2, "", ""}, `["1"]`, "number"},
-			{fizzbuzz.Config{1, 1, 1, "", "a"}, `["a"]`, "str2"},
-			{fizzbuzz.Config{1, 1, 1, "a", ""}, `["a"]`, "str1"},
+			{fizzbuzz.Config{1, 1, 1, "", "a"}, `["a"]`, "str1str2"},
+			{fizzbuzz.Config{1, 1, 1, "a", ""}, `["a"]`, "str1str2"},
 			{fizzbuzz.Config{1, 1, 1, "a", "b"}, `["ab"]`, "str1str2"},
 			{fizzbuzz.Config{2, 1, 2, "a", "b"}, `["a","ab"]`, "str1,str1str2"},
 			{fizzbuzz.Config{2, 3, 1, "a", "b"}, `["b","b"]`, "str2,str2"},
@@ -63,91 +71,80 @@ func TestWriteInto(t *testing.T) {
 			{fizzbuzz.Config{13, 3, 4, "fizz", "buzz"}, `["1","2","fizz","buzz","5","fizz","7","buzz","fizz","10","11","fizzbuzz","13"]`, "complete_suite"},
 			{*fizzbuzz.Default(), `["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]`, "default_suite"},
 		}
-		for _, vc := range validCases {
-			vc := vc
-			t.Run(vc.name, func(t *testing.T) {
-				t.Parallel()
-				got, err := write(t, vc.input.WriteInto)
+		for _, tc := range validCases {
+			tc := tc
+			test(t, tc.name, func(t *testing.T) {
+				got, err := write(t, tc.input.WriteInto)
 				if err != nil {
 					t.Fatal(err)
 				}
-				if vc.expected != got {
-					t.Errorf("WriteInto give an unexpected result with %#v\nexpected: %s\ngot:      %s", vc.input, vc.expected, got)
+				if tc.expected != got {
+					t.Errorf("WriteInto give an unexpected result with %#v\nexpected: %s\ngot:      %s", tc.input, tc.expected, got)
 				}
 			})
 		}
 	})
 
-	t.Run("fail", func(t *testing.T) {
-		t.Parallel()
-
+	test(t, "fail", func(t *testing.T) {
 		// tests invalid configurations
-		t.Run("invalid", func(t *testing.T) {
-			t.Parallel()
-			invalidInputs := []fizzbuzz.Config{
-				{-1, -1, -1, "", "negative_int1,negative_int2"},
-				{1, -1, -1, "", "negative_int1,negative_int2"},
-				{1, -1, 1, "", "negative_int1"},
-				{1, 1, -1, "", "negative_int2"},
-			}
-			for _, ic := range invalidInputs {
-				if _, err := write(t, ic.WriteInto); !errors.Is(err, fizzbuzz.ErrInvalidInput) {
-					t.Fatalf("WriteInto should return an ErrInvalidInput with %#v", ic)
+		invalidCases := []testCase{
+			{fizzbuzz.Config{-1, -1, -1, "", ""}, "", "negative_int1,negative_int2"},
+			{fizzbuzz.Config{1, -1, -1, "", ""}, "", "negative_int1,negative_int2"},
+			{fizzbuzz.Config{1, -1, 1, "", ""}, "", "negative_int1"},
+			{fizzbuzz.Config{1, 1, -1, "", ""}, "", "negative_int2"},
+		}
+		for _, tc := range invalidCases {
+			tc := tc
+			test(t, tc.name, func(t *testing.T) {
+				if _, err := write(t, tc.input.WriteInto); !errors.Is(err, fizzbuzz.ErrInvalidInput) {
+					t.Errorf("WriteInto should return an ErrInvalidInput with %#v", tc.input)
 				}
-			}
-		})
-		t.Run("closed", func(t *testing.T) {
-			t.Parallel()
+			})
+		}
+		test(t, "closed", func(t *testing.T) {
 			if err := fizzbuzz.Default().WriteInto(closed{}); err != errClosed {
-				t.Fatal("WriteInto should return the writer error", err)
+				t.Error("WriteInto should return the writer error", err)
 			}
 		})
 	})
 
 	// tests WriteInto and WriteInto2 side by side, reporting any inconsistencies
-	t.Run("compare", func(t *testing.T) {
-		t.Parallel()
-		type testCase struct {
-			input fizzbuzz.Config
-			name  string
-		}
+	test(t, "compare", func(t *testing.T) {
 		testCases := []testCase{
-			{fizzbuzz.Config{-1, 1, 1, "", ""}, "empty"},
-			{fizzbuzz.Config{-1, -1, -1, "", ""}, "negative_int1,negative_int2"},
-			{fizzbuzz.Config{1, -1, -1, "", ""}, "negative_int1,negative_int2"},
-			{fizzbuzz.Config{1, -1, 1, "", ""}, "negative_int1"},
-			{fizzbuzz.Config{1, 1, -1, "", ""}, "negative_int2"},
-			{fizzbuzz.Config{0, 1, 1, "", ""}, "empty"},
-			{fizzbuzz.Config{1, 1, 1, "", ""}, "str1"},
-			{fizzbuzz.Config{1, 2, 3, "", ""}, "number"},
-			{fizzbuzz.Config{2, 2, 3, "", ""}, "number,str1"},
-			{fizzbuzz.Config{3, 2, 3, "", ""}, "number,str1,str2"},
-			{fizzbuzz.Config{3, 2, 3, `"`, `"`}, "number,str1_escaped,str2_escaped"},
+			{fizzbuzz.Config{-1, 1, 1, "", ""}, "", "empty"},
+			{fizzbuzz.Config{-1, -1, -1, "", ""}, "", "negative_int1,negative_int2"},
+			{fizzbuzz.Config{1, -1, -1, "", ""}, "", "negative_int1,negative_int2"},
+			{fizzbuzz.Config{1, -1, 1, "", ""}, "", "negative_int1"},
+			{fizzbuzz.Config{1, 1, -1, "", ""}, "", "negative_int2"},
+			{fizzbuzz.Config{0, 1, 1, "", ""}, "", "empty"},
+			{fizzbuzz.Config{1, 1, 1, "", ""}, "", "str1"},
+			{fizzbuzz.Config{1, 2, 3, "", ""}, "", "number"},
+			{fizzbuzz.Config{2, 2, 3, "", ""}, "", "number,str1"},
+			{fizzbuzz.Config{3, 2, 3, "", ""}, "", "number,str1,str2"},
+			{fizzbuzz.Config{3, 2, 3, `"`, `"`}, "", "number,str1_escaped,str2_escaped"},
 		}
 		for i := -10; i < 100; i++ {
 			d := fizzbuzz.Default()
 			d.Limit = i
-			testCases = append(testCases, testCase{*d, fmt.Sprint("limit_", i)})
+			testCases = append(testCases, testCase{*d, "", fmt.Sprint("limit_", i)})
 		}
 		for _, tc := range testCases {
 			tc := tc
-			t.Run(tc.name, func(t *testing.T) {
-				t.Parallel()
-
+			test(t, tc.name, func(t *testing.T) {
 				// make sure that WriteInto and WriteInto2 behave in the same way
 				b1, err1 := write(t, tc.input.WriteInto)
 				b2, err2 := write(t, tc.input.WriteInto2)
 				format := "WriteInto and WriteInto2 give different results with %#v\nWriteInto:  %s\nWriteInto2: %s"
 				if err1 == nil && err2 != nil {
-					t.Fatalf(format, tc.input, b1, err2)
+					t.Errorf(format, tc.input, b1, err2)
 				} else if err1 != nil && err2 == nil {
-					t.Fatalf(format, tc.input, err1, b2)
+					t.Errorf(format, tc.input, err1, b2)
 				} else if err1 != nil && err2 != nil {
 					if errors.Is(err1, fizzbuzz.ErrInvalidInput) != errors.Is(err2, fizzbuzz.ErrInvalidInput) {
-						t.Fatalf(format, tc.input, err1, err2)
+						t.Errorf(format, tc.input, err1, err2)
 					}
 				} else if b1 != b2 {
-					t.Fatalf(format, tc.input, b1, b2)
+					t.Errorf(format, tc.input, b1, b2)
 				}
 			})
 		}
