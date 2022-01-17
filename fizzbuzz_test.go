@@ -88,7 +88,7 @@ func TestWriteInto(t *testing.T) {
 			{*fizzbuzz.Default(), `["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]`, "default_suite"},
 		}
 		for _, tc := range validCases {
-			tc := tc
+			tc := tc // capture range variable
 			test(t, tc.name, func(t *testing.T) {
 				got, err := write(t, tc.input.WriteInto)
 				if err != nil {
@@ -102,6 +102,12 @@ func TestWriteInto(t *testing.T) {
 	})
 
 	test(t, "fail", func(t *testing.T) {
+		test(t, "closed", func(t *testing.T) {
+			if err := fizzbuzz.Default().WriteInto(closed{}); err != errClosed {
+				t.Error("WriteInto should return the writer error, instead it returned", err)
+			}
+		})
+
 		// tests invalid configurations
 		invalidCases := []testCase{
 			{fizzbuzz.Config{-1, -1, -1, "", ""}, "", "negative_int1,negative_int2"},
@@ -110,18 +116,13 @@ func TestWriteInto(t *testing.T) {
 			{fizzbuzz.Config{1, 1, -1, "", ""}, "", "negative_int2"},
 		}
 		for _, tc := range invalidCases {
-			tc := tc
+			tc := tc // capture range variable
 			test(t, tc.name, func(t *testing.T) {
 				if _, err := write(t, tc.input.WriteInto); !errors.Is(err, fizzbuzz.ErrInvalidInput) {
 					t.Errorf("WriteInto should return an ErrInvalidInput with %#v", tc.input)
 				}
 			})
 		}
-		test(t, "closed", func(t *testing.T) {
-			if err := fizzbuzz.Default().WriteInto(closed{}); err != errClosed {
-				t.Error("WriteInto should return the writer error, instead it returned", err)
-			}
-		})
 	})
 
 	// tests WriteInto and WriteInto2 side by side, reporting any inconsistencies
@@ -145,7 +146,7 @@ func TestWriteInto(t *testing.T) {
 			testCases = append(testCases, testCase{*d, "", fmt.Sprint("limit_", limit)})
 		}
 		for _, tc := range testCases {
-			tc := tc
+			tc := tc // capture range variable
 			test(t, tc.name, func(t *testing.T) {
 				// make sure that WriteInto and WriteInto2 behave in the same way
 				b1, err1 := write(t, tc.input.WriteInto)

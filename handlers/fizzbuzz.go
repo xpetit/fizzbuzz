@@ -117,7 +117,7 @@ func (s *Stats) HandleStats(rw http.ResponseWriter, r *http.Request) {
 	for f, count := range s.m {
 		if count > result.Count {
 			result.Count = count
-			f := f // shallow copy
+			f := f // capture range variable
 			result.MostFrequent = &f
 		}
 	}
