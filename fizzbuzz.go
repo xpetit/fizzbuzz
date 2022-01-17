@@ -58,7 +58,7 @@ func (c *Config) toString(i int) string {
 	return strconv.Itoa(i)
 }
 
-// WriteInto2 is a naive implementation or WriteInto for illustration and testing purposes.
+// WriteInto2 is a naive implementation of WriteInto for illustration and testing purposes.
 func (c *Config) WriteInto2(w io.Writer) error {
 	// Check the config validity
 	if c.Int1 < 1 {
