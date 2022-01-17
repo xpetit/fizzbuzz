@@ -81,12 +81,11 @@ curl localhost:8080/api/v1/fizzbuzz/stats
 Custom request:
 
 ```
-curl localhost:8080/api/v1/fizzbuzz -Gdlimit=15 -dint1=3 -dint2=5 -dstr1=buzz -dstr2=lightyear
+curl localhost:8080/api/v1/fizzbuzz -Gdlimit=1 -dint1=1 -dint2=1 -dstr1=buzz -dstr2=lightyear
 ```
 
-<!-- prettier-ignore -->
 ```json
-["1","2","buzz","4","lightyear","buzz","7","8","buzz","lightyear","11","buzz","13","14","buzzlightyear"]
+["buzzlightyear"]
 ```
 
 ## Design
