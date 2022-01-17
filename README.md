@@ -32,7 +32,7 @@ GOPROXY=direct go run github.com/xpetit/fizzbuzz/cmd/fizzbuzzd@latest
 
 To stop it, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
 
-If you don't trust this program, you can use Docker, clone this repository and run the following commands inside:
+If you don't trust this program, you can use Docker. Clone this repository and run the following commands inside:
 
 ```
 docker build --tag github.com/xpetit/fizzbuzz .
@@ -67,12 +67,11 @@ This was discarded for the following reasons:
 
 ### Packages
 
-- `github.com/xpetit/fizzbuzz/cmd/fizzbuzzd`<br>
-  The main program, running the HTTP server.
-- `github.com/xpetit/fizzbuzz/handlers`<br>
-  The HTTP handlers.
-- `github.com/xpetit/fizzbuzz`<br>
-  The Fizz buzz writer `WriteInto`.
+The top-down list of dependencies is as follows:
+
+- `github.com/xpetit/fizzbuzz/cmd/fizzbuzzd`: The main program, running the HTTP server.
+- `github.com/xpetit/fizzbuzz/handlers`: The HTTP handlers.
+- `github.com/xpetit/fizzbuzz`: The Fizz buzz writer `WriteInto`.
 
 ### Performance
 
@@ -83,7 +82,7 @@ BenchmarkWriteInto/big-12    58    20081942 ns/op         142 B/op        9 allo
 BenchmarkWriteInto2/big-12   12   100073916 ns/op   109733862 B/op   500030 allocs/op
 ```
 
-However the biggest problem with the naive implementation is that it first generates the JSON array and then writes it, even if the writer has been closed before.
+The biggest problem with the naive implementation is that it first generates the JSON array and then writes it, even if the writer has been closed before.
 This means that a buggy program looping through this API can create unnecessary work and resource exhaustion. The same is true for an attacker.
 The optimized implementation stops writing Fizz buzz values as soon as the API consumer no longer requests them.
 
