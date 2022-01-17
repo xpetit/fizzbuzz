@@ -47,6 +47,22 @@ func test(t *testing.T, name string, f func(t *testing.T)) {
 	})
 }
 
+// TestWriteInto tests the WriteInto function with valid, invalid configurations and compares it to WriteInto2.
+// It uses the subtests introduced in Go 1.7, which gives fine control over the test(s) to be executed.
+//
+// Run the comparision of the generated test case with a limit of 9:
+// go test -run /compare/limit_9$  # Note the EOL regex symbol '$' to avoid matching "limit_90"
+//
+// Run the test where WriteInto should fail because of a negative int2:
+// go test -run /fail/^negative_int2$
+//
+// Run the tests where WriteInto should fail and has a negative int2:
+// go test -run /fail/negative_int2
+//
+// Run the test where WriteInto shouldn't write any value:
+// go test -run //empty
+//
+// For more information about subtests and sub-benchmarks, please visit https://go.dev/blog/subtests
 func TestWriteInto(t *testing.T) {
 	type testCase struct {
 		input    fizzbuzz.Config
