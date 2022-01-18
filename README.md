@@ -45,12 +45,10 @@ When the service is running, you can query with it with `curl`:
 curl localhost:8080/api/v1/fizzbuzz/stats
 ```
 
-<!-- prettier-ignore -->
-```json
-{"most_frequent":null,"count":0}
-```
-
----
+> <!-- prettier-ignore -->
+> ```json
+> {"most_frequent":null,"count":0}
+> ```
 
 Using the defaults:
 
@@ -58,12 +56,10 @@ Using the defaults:
 curl localhost:8080/api/v1/fizzbuzz
 ```
 
-<!-- prettier-ignore -->
-```json
-["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]
-```
-
----
+> <!-- prettier-ignore -->
+> ```json
+> ["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]
+> ```
 
 The `most_frequent` object is now populated:
 
@@ -71,12 +67,10 @@ The `most_frequent` object is now populated:
 curl localhost:8080/api/v1/fizzbuzz/stats
 ```
 
-<!-- prettier-ignore -->
-```json
-{"most_frequent":{"limit":10,"int1":2,"int2":3,"str1":"fizz","str2":"buzz"},"count":1}
-```
-
----
+> <!-- prettier-ignore -->
+> ```json
+> {"most_frequent":{"limit":10,"int1":2,"int2":3,"str1":"fizz","str2":"buzz"},"count":1}
+> ```
 
 Custom request:
 
@@ -84,9 +78,9 @@ Custom request:
 curl localhost:8080/api/v1/fizzbuzz -Gdlimit=1 -dint1=1 -dint2=1 -dstr1=buzz -dstr2=lightyear
 ```
 
-```json
-["buzzlightyear"]
-```
+> ```json
+> ["buzzlightyear"]
+> ```
 
 ## Design
 
