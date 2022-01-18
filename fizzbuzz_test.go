@@ -168,13 +168,19 @@ func TestWriteInto(t *testing.T) {
 			`2`,
 			`12`,
 		}
+		randStr := func() (s string) {
+			for i := 0; i < rand.Intn(4); i++ {
+				s += ss[rand.Intn(len(ss))] // pick a random string from ss
+			}
+			return // the concatenation of 0 to 3 random strings from ss
+		}
 		for i := 0; i < 100; i++ {
 			testCases = append(testCases, testCase{input: fizzbuzz.Config{
-				Limit: rand.Intn(100) - 10,    // between -10 and 89
-				Int1:  rand.Intn(100) - 10,    // between -10 and 89
-				Int2:  rand.Intn(100) - 10,    // between -10 and 89
-				Str1:  ss[rand.Intn(len(ss))], // pick a random string from ss
-				Str2:  ss[rand.Intn(len(ss))], // pick a random string from ss
+				Limit: rand.Intn(100) - 10, // between -10 and 89
+				Int1:  rand.Intn(100) - 10, // between -10 and 89
+				Int2:  rand.Intn(100) - 10, // between -10 and 89
+				Str1:  randStr(),
+				Str2:  randStr(),
 			}})
 		}
 
