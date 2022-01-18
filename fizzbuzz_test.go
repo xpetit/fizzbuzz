@@ -32,7 +32,7 @@ func write(t *testing.T, f func(w io.Writer) error) (string, error) {
 	}
 	s := buf.String()
 	i := strings.LastIndexByte(s, '\n')
-	if i != len(s)-1 {
+	if i == -1 || i != len(s)-1 {
 		t.Fatal("missing final newline")
 	}
 	if strings.LastIndexByte(s[:i], '\n') != -1 {
