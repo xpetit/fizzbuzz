@@ -79,21 +79,20 @@ func (s *Stats) HandleFizzBuzz(rw http.ResponseWriter, r *http.Request) {
 	setString(&c.Str1, values, "str1", "fizz")
 	setString(&c.Str2, values, "str2", "buzz")
 
-	// Update Fizz buzz stats
-	s.Lock()
-	if s.m == nil {
-		s.m = map[fizzbuzz.Config]int{}
-	}
-	s.m[c]++
-	s.Unlock()
-
-	// Write Fizz buzz
+	// Write Fizz buzz and update the statistics in case of success
 	if err := c.WriteInto(rw); err != nil {
 		if errors.Is(err, fizzbuzz.ErrInvalidInput) {
 			jsonErr(rw, err.Error(), http.StatusBadRequest)
 		} else {
 			log.Println("write error:", err)
 		}
+	} else {
+		s.Lock()
+		if s.m == nil {
+			s.m = map[fizzbuzz.Config]int{}
+		}
+		s.m[c]++
+		s.Unlock()
 	}
 }
 
