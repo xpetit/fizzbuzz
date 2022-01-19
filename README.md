@@ -29,7 +29,7 @@ Requirements:
 Use this command to directly update and run the service:
 
 ```
-GOPROXY=direct go run github.com/xpetit/fizzbuzz/cmd/fizzbuzzd@latest
+go run github.com/xpetit/fizzbuzz/cmd/fizzbuzzd@latest
 ```
 
 To stop it, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
