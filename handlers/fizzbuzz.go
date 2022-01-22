@@ -15,8 +15,8 @@ import (
 
 // Stats holds a protected (thread safe) hit count.
 type Stats struct {
-	sync.RWMutex
-	m map[fizzbuzz.Config]int
+	mu sync.RWMutex
+	m  map[fizzbuzz.Config]int
 }
 
 // setInt sets the int pointed to by p to the value found in the values, or a default value.
@@ -87,12 +87,12 @@ func (s *Stats) HandleFizzBuzz(rw http.ResponseWriter, r *http.Request) {
 			log.Println("write error:", err)
 		}
 	} else {
-		s.Lock()
+		s.mu.Lock()
 		if s.m == nil {
 			s.m = map[fizzbuzz.Config]int{}
 		}
 		s.m[c]++
-		s.Unlock()
+		s.mu.Unlock()
 	}
 }
 
@@ -112,7 +112,7 @@ func (s *Stats) HandleStatsV1(rw http.ResponseWriter, r *http.Request) {
 		MostFrequent *fizzbuzz.Config `json:"most_frequent"`
 		Count        int              `json:"count"`
 	}
-	s.RLock()
+	s.mu.RLock()
 	for cfg, count := range s.m {
 		if count > result.Count {
 			result.Count = count
@@ -120,7 +120,7 @@ func (s *Stats) HandleStatsV1(rw http.ResponseWriter, r *http.Request) {
 			result.MostFrequent = &cfg
 		}
 	}
-	s.RUnlock()
+	s.mu.RUnlock()
 	if err := json.NewEncoder(rw).Encode(result); err != nil {
 		log.Println("write error:", err)
 	}
@@ -144,7 +144,7 @@ func (s *Stats) HandleStats(rw http.ResponseWriter, r *http.Request) {
 			Config *fizzbuzz.Config `json:"config,omitempty"`
 		} `json:"most_frequent"`
 	}
-	s.RLock()
+	s.mu.RLock()
 	for cfg, count := range s.m {
 		if count > result.MostFrequent.Count {
 			result.MostFrequent.Count = count
@@ -156,7 +156,7 @@ func (s *Stats) HandleStats(rw http.ResponseWriter, r *http.Request) {
 			result.MostFrequent.Config = &cfg
 		}
 	}
-	s.RUnlock()
+	s.mu.RUnlock()
 	if err := json.NewEncoder(rw).Encode(result); err != nil {
 		log.Println("write error:", err)
 	}
