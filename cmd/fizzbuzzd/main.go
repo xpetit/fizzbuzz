@@ -9,7 +9,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/xpetit/fizzbuzz/handlers"
+	"github.com/xpetit/fizzbuzz/v2/handlers"
 )
 
 func main() {
@@ -36,8 +36,11 @@ func main() {
 
 	// Configure HTTP routing
 	var s handlers.Stats
+	api.HandleFunc("/api/v2/fizzbuzz", s.HandleFizzBuzz)
+	api.HandleFunc("/api/v2/fizzbuzz/stats", s.HandleStats)
+	// v1 compatibility
 	api.HandleFunc("/api/v1/fizzbuzz", s.HandleFizzBuzz)
-	api.HandleFunc("/api/v1/fizzbuzz/stats", s.HandleStats)
+	api.HandleFunc("/api/v1/fizzbuzz/stats", s.HandleStatsV1)
 
 	// Spawn a goroutine that waits for a termination signal and then stops the HTTP server
 	go func() {

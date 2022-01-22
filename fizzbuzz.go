@@ -29,7 +29,21 @@ func (c *Config) String() string {
 	return strings.ToLower(strings.ReplaceAll(fmt.Sprintf("%#v", c), " ", ""))
 }
 
-// Default returns a default configuration that gives all the values of the Fizz buzz
+// LessThan compares each exported field to determine which config is the "smallest".
+func (a *Config) LessThan(b *Config) bool {
+	if a.Limit != b.Limit {
+		return a.Limit < b.Limit
+	} else if a.Int1 != b.Int1 {
+		return a.Int1 < b.Int1
+	} else if a.Int2 != b.Int2 {
+		return a.Int2 < b.Int2
+	} else if a.Str1 != b.Str1 {
+		return a.Str1 < b.Str1
+	}
+	return a.Str2 < b.Str2
+}
+
+// Default returns a default configuration that gives all the values of the Fizz buzz.
 func Default() *Config {
 	return &Config{
 		Limit: 10,

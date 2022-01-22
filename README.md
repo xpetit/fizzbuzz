@@ -6,11 +6,11 @@ FizzBuzz is a Golang HTTP server exposing a RESTful web API that provides a [Fiz
 
 It has two endpoints:
 
-- `/api/v1/fizzbuzz`
+- `/api/v2/fizzbuzz`
   - Accepts five optional query parameters : three integers `int1`, `int2` and `limit`, and two strings `str1` and `str2`.<br>
     The default values are: `limit=10`, `int1=2`, `int2=3`, `str1=fizz`, `str2=buzz`.
   - Returns a list of strings with numbers from 1 to `limit`, where: all multiples of `int1` are replaced by `str1`, all multiples of `int2` are replaced by `str2`, all multiples of `int1` and `int2` are replaced by `str1str2`.
-- `/api/v1/fizzbuzz/stats`
+- `/api/v2/fizzbuzz/stats`
   - Accept no parameters
   - Return the parameters corresponding to the most used request, as well as the number of hits for this request
 
@@ -29,7 +29,7 @@ Requirements:
 Use this command to directly update and run the service:
 
 ```
-go run github.com/xpetit/fizzbuzz/cmd/fizzbuzzd@latest
+go run github.com/xpetit/fizzbuzz/v2/cmd/fizzbuzzd@latest
 ```
 
 To stop it, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
@@ -44,18 +44,18 @@ docker run --rm --publish 8080:8080 github.com/xpetit/fizzbuzz
 When the service is running, you can query with it with `curl`:
 
 ```
-curl localhost:8080/api/v1/fizzbuzz/stats
+curl localhost:8080/api/v2/fizzbuzz/stats
 ```
 
 > <!-- prettier-ignore -->
 > ```json
-> {"most_frequent":null,"count":0}
+> {"most_frequent":{"count":0}}
 > ```
 
 Using the defaults:
 
 ```
-curl localhost:8080/api/v1/fizzbuzz
+curl localhost:8080/api/v2/fizzbuzz
 ```
 
 > <!-- prettier-ignore -->
@@ -63,21 +63,21 @@ curl localhost:8080/api/v1/fizzbuzz
 > ["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]
 > ```
 
-The `most_frequent` object is now populated:
+The `config` object is now populated:
 
 ```
-curl localhost:8080/api/v1/fizzbuzz/stats
+curl localhost:8080/api/v2/fizzbuzz/stats
 ```
 
 > <!-- prettier-ignore -->
 > ```json
-> {"most_frequent":{"limit":10,"int1":2,"int2":3,"str1":"fizz","str2":"buzz"},"count":1}
+> {"most_frequent":{"count":1,"config":{"limit":10,"int1":2,"int2":3,"str1":"fizz","str2":"buzz"}}}
 > ```
 
 Custom request:
 
 ```
-curl localhost:8080/api/v1/fizzbuzz -Gdlimit=1 -dint1=1 -dint2=1 -dstr1=buzz -dstr2=lightyear
+curl localhost:8080/api/v2/fizzbuzz -Gdlimit=1 -dint1=1 -dint2=1 -dstr1=buzz -dstr2=lightyear
 ```
 
 > ```json
@@ -103,8 +103,8 @@ This was discarded for the following reasons:
 
 The top-down list of dependencies is as follows:
 
-- `github.com/xpetit/fizzbuzz/cmd/fizzbuzzd`: The main program, running the HTTP server.
-- `github.com/xpetit/fizzbuzz/handlers`: The HTTP handlers.
+- `github.com/xpetit/fizzbuzz/v2/cmd/fizzbuzzd`: The main program, running the HTTP server.
+- `github.com/xpetit/fizzbuzz/v2/handlers`: The HTTP handlers.
 - `github.com/xpetit/fizzbuzz`: The Fizz buzz writer `WriteInto`.
 
 ### Performance
@@ -132,13 +132,13 @@ An average of 190 MB/s actual throughput and 400 MB/s theoretical maximum throug
 The command used to measure HTTP throughput:
 
 ```
-curl -o /dev/null localhost:8080/api/v1/fizzbuzz?limit=10000000000
+curl -o /dev/null localhost:8080/api/v2/fizzbuzz?limit=10000000000
 ```
 
 In addition, [`wrk`](https://github.com/wg/wrk) reports 221734 requests/second with a random limit between 1 and 100:
 
 ```
-Running 10s test @ http://localhost:8080/api/v1/fizzbuzz?limit=param_value
+Running 10s test @ http://localhost:8080/api/v2/fizzbuzz?limit=param_value
   4 threads and 400 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
     Latency     2.14ms    2.52ms  29.34ms   85.42%

@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/xpetit/fizzbuzz"
+	"github.com/xpetit/fizzbuzz/v2"
 )
 
 // Stats holds a protected (thread safe) hit count.
@@ -96,9 +96,9 @@ func (s *Stats) HandleFizzBuzz(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleStats is an HTTP handler that answers with a JSON object representing the most used Fizz buzz config.
+// HandleStatsV1 is a legacy HTTP handler that answers with a JSON object representing the most used Fizz buzz config.
 // If no previous call to fizzbuzz has been made, the "most_frequent" config is null.
-func (s *Stats) HandleStats(rw http.ResponseWriter, r *http.Request) {
+func (s *Stats) HandleStatsV1(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if r.Method != http.MethodGet {
 		jsonErr(rw, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
@@ -113,11 +113,47 @@ func (s *Stats) HandleStats(rw http.ResponseWriter, r *http.Request) {
 		Count        int              `json:"count"`
 	}
 	s.RLock()
-	for f, count := range s.m {
+	for cfg, count := range s.m {
 		if count > result.Count {
 			result.Count = count
-			f := f // capture range variable
-			result.MostFrequent = &f
+			cfg := cfg // capture range variable
+			result.MostFrequent = &cfg
+		}
+	}
+	s.RUnlock()
+	if err := json.NewEncoder(rw).Encode(result); err != nil {
+		log.Println("write error:", err)
+	}
+}
+
+// HandleStats is an HTTP handler that answers with a JSON object representing the most used Fizz buzz config.
+// If no previous call to fizzbuzz has been made, most_frequent.config is null.
+func (s *Stats) HandleStats(rw http.ResponseWriter, r *http.Request) {
+	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
+	if r.Method != http.MethodGet {
+		jsonErr(rw, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	} else if len(r.URL.RawQuery) > 0 {
+		jsonErr(rw, "this endpoint takes no parameters", http.StatusBadRequest)
+		return
+	}
+
+	var result struct {
+		MostFrequent struct {
+			Count  int              `json:"count"`
+			Config *fizzbuzz.Config `json:"config,omitempty"`
+		} `json:"most_frequent"`
+	}
+	s.RLock()
+	for cfg, count := range s.m {
+		if count > result.MostFrequent.Count {
+			result.MostFrequent.Count = count
+			cfg := cfg
+			result.MostFrequent.Config = &cfg
+		} else if count == result.MostFrequent.Count && cfg.LessThan(result.MostFrequent.Config) {
+			// Same hit count, the configs are differentiated because the "iteration order over maps is not specified" (Go spec)
+			cfg := cfg
+			result.MostFrequent.Config = &cfg
 		}
 	}
 	s.RUnlock()
