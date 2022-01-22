@@ -37,8 +37,8 @@ To stop it, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
 If you don't trust this program, you can use Docker. Clone this repository and run the following commands inside:
 
 ```
-docker build --tag github.com/xpetit/fizzbuzz .
-docker run --rm --publish 8080:8080 github.com/xpetit/fizzbuzz
+docker build --tag github.com/xpetit/fizzbuzz/v2 .
+docker run --rm --publish 8080:8080 github.com/xpetit/fizzbuzz/v2
 ```
 
 When the service is running, you can query with it with `curl`:
@@ -105,7 +105,7 @@ The top-down list of dependencies is as follows:
 
 - `github.com/xpetit/fizzbuzz/v2/cmd/fizzbuzzd`: The main program, running the HTTP server.
 - `github.com/xpetit/fizzbuzz/v2/handlers`: The HTTP handlers.
-- `github.com/xpetit/fizzbuzz`: The Fizz buzz writer `WriteInto`.
+- `github.com/xpetit/fizzbuzz/v2`: The Fizz buzz writer `WriteInto`.
 
 ### Performance
 
