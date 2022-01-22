@@ -34,8 +34,7 @@ func write(t *testing.T, f func(w io.Writer) error) (string, error) {
 	i := strings.LastIndexByte(s, '\n')
 	if i == -1 || i != len(s)-1 {
 		t.Fatal("missing final newline")
-	}
-	if strings.LastIndexByte(s[:i], '\n') != -1 {
+	} else if strings.LastIndexByte(s[:i], '\n') != -1 {
 		t.Fatal("more than one final newline")
 	}
 	return s[:i], nil // trims final newline
@@ -111,11 +110,9 @@ func TestWriteInto(t *testing.T) {
 		for _, tc := range validCases {
 			tc := tc // capture range variable
 			runParallel(t, tc.input.String(), func(t *testing.T) {
-				got, err := write(t, tc.input.WriteInto)
-				if err != nil {
+				if got, err := write(t, tc.input.WriteInto); err != nil {
 					t.Fatal("WriteInto failed:", err)
-				}
-				if tc.expected != got {
+				} else if tc.expected != got {
 					t.Errorf("expected: %s, got: %s", tc.expected, got)
 				}
 			})
@@ -151,9 +148,7 @@ func TestWriteInto(t *testing.T) {
 
 		// add valid test cases with a variable limit
 		for limit := -10; limit < 100; limit++ {
-			d := fizzbuzz.Default()
-			d.Limit = limit
-			testCases = append(testCases, testCase{input: *d})
+			testCases = append(testCases, testCase{input: *withLimit(limit)})
 		}
 
 		// add random test cases
@@ -198,7 +193,7 @@ func TestWriteInto(t *testing.T) {
 					if errors.Is(err1, fizzbuzz.ErrInvalidInput) != errors.Is(err2, fizzbuzz.ErrInvalidInput) {
 						t.Errorf("WriteInto: %s, WriteInto2: %s", err1, err2)
 					}
-				} else if b1 != b2 {
+				} else if b1 != b2 { // err1 == nil && err2 == nil
 					t.Errorf("WriteInto: %s, WriteInto2: %s", b1, b2)
 				}
 			})

@@ -18,7 +18,7 @@ type Config struct {
 	Str2  string `json:"str2"`  // Str2 is the string to use when the number is divisible by Int2
 }
 
-// ErrInvalidInput is returned by WriteInto when attempting to write an invalid config
+// ErrInvalidInput is returned by WriteInto when attempting to write an invalid config.
 var ErrInvalidInput = errors.New("invalid input")
 
 // String formats the configuration, example:
@@ -40,7 +40,7 @@ func Default() *Config {
 	}
 }
 
-// toString returns the Fizz buzz value as a string corresponding to a number
+// toString returns the Fizz buzz value as a string corresponding to a number.
 func (c *Config) toString(i int) string {
 	if i%c.Int1 == 0 {
 		if i%c.Int2 == 0 {
