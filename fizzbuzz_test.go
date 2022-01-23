@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/xpetit/fizzbuzz/v2"
+	"github.com/xpetit/fizzbuzz/v3"
 )
 
 func Example() {

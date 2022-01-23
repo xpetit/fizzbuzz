@@ -31,9 +31,9 @@ ENTRYPOINT ["/app/fizzbuzzd"]
 COPY --from=builder /app/fizzbuzzd /app/fizzbuzzd
 
 # The HTTP listening port is both configurable at build-time (image) and runtime (container):
-#   docker build --build-arg PORT=8081 --tag github.com/xpetit/fizzbuzz/v2
+#   docker build --build-arg PORT=8081 --tag github.com/xpetit/fizzbuzz/v3
 # or:
-#   docker run --rm --env PORT=8081 --publish 9000:8081 github.com/xpetit/fizzbuzz/v2
+#   docker run --rm --env PORT=8081 --publish 9000:8081 github.com/xpetit/fizzbuzz/v3
 ARG PORT=8080
 ENV PORT ${PORT}
 EXPOSE ${PORT}

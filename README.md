@@ -29,7 +29,7 @@ Requirements:
 Use this command to directly update and run the service:
 
 ```
-go run github.com/xpetit/fizzbuzz/v2/cmd/fizzbuzzd@latest
+go run github.com/xpetit/fizzbuzz/v3/cmd/fizzbuzzd@latest
 ```
 
 To stop it, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
@@ -37,8 +37,8 @@ To stop it, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
 If you don't trust this program, you can use Docker. Clone this repository and run the following commands inside:
 
 ```
-docker build --tag github.com/xpetit/fizzbuzz/v2 .
-docker run --rm --publish 8080:8080 github.com/xpetit/fizzbuzz/v2
+docker build --tag github.com/xpetit/fizzbuzz/v3 .
+docker run --rm --publish 8080:8080 github.com/xpetit/fizzbuzz/v3
 ```
 
 When the service is running, you can query with it with `curl`:
@@ -103,9 +103,9 @@ This was discarded for the following reasons:
 
 The top-down list of dependencies is as follows:
 
-- `github.com/xpetit/fizzbuzz/v2/cmd/fizzbuzzd`: The main program, running the HTTP server.
-- `github.com/xpetit/fizzbuzz/v2/handlers`: The HTTP handlers.
-- `github.com/xpetit/fizzbuzz/v2`: The Fizz buzz writer `WriteInto`.
+- `github.com/xpetit/fizzbuzz/v3/cmd/fizzbuzzd`: The main program, running the HTTP server.
+- `github.com/xpetit/fizzbuzz/v3/handlers`: The HTTP handlers.
+- `github.com/xpetit/fizzbuzz/v3`: The Fizz buzz writer `WriteInto`.
 
 ### Performance
 

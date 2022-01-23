@@ -10,11 +10,11 @@ import (
 	"strconv"
 	"sync"
 
-	"github.com/xpetit/fizzbuzz/v2"
+	"github.com/xpetit/fizzbuzz/v3"
 )
 
-// Stats holds a protected (thread safe) hit count.
-type Stats struct {
+// Fizzbuzz holds a protected (thread safe) hit count.
+type Fizzbuzz struct {
 	mu sync.RWMutex
 	m  map[fizzbuzz.Config]int
 }
@@ -45,18 +45,18 @@ func setString(p *string, values url.Values, key, value string) {
 }
 
 // jsonErr is a helper function to respond a JSON-formatted error.
-func jsonErr(rw http.ResponseWriter, error string, code int) {
+func jsonErr(rw http.ResponseWriter, message string, code int) {
 	rw.WriteHeader(code)
 	if err := json.NewEncoder(rw).Encode(struct {
 		Error string `json:"error"`
-	}{error}); err != nil {
+	}{message}); err != nil {
 		log.Println("write error:", err)
 	}
 }
 
-// HandleFizzBuzz is an HTTP handler that answers with a JSON array containing the Fizz buzz values.
+// Handle is an HTTP handler that answers with a JSON array containing the Fizz buzz values.
 // It accepts optional URL query parameters to change the default config.
-func (s *Stats) HandleFizzBuzz(rw http.ResponseWriter, r *http.Request) {
+func (fb *Fizzbuzz) Handle(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if r.Method != http.MethodGet {
 		jsonErr(rw, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
@@ -87,18 +87,18 @@ func (s *Stats) HandleFizzBuzz(rw http.ResponseWriter, r *http.Request) {
 			log.Println("write error:", err)
 		}
 	} else {
-		s.mu.Lock()
-		if s.m == nil {
-			s.m = map[fizzbuzz.Config]int{}
+		fb.mu.Lock()
+		if fb.m == nil {
+			fb.m = map[fizzbuzz.Config]int{}
 		}
-		s.m[c]++
-		s.mu.Unlock()
+		fb.m[c]++
+		fb.mu.Unlock()
 	}
 }
 
 // HandleStatsV1 is a legacy HTTP handler that answers with a JSON object representing the most used Fizz buzz config.
 // If no previous call to fizzbuzz has been made, the "most_frequent" config is null.
-func (s *Stats) HandleStatsV1(rw http.ResponseWriter, r *http.Request) {
+func (fb *Fizzbuzz) HandleStatsV1(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if r.Method != http.MethodGet {
 		jsonErr(rw, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
@@ -112,23 +112,23 @@ func (s *Stats) HandleStatsV1(rw http.ResponseWriter, r *http.Request) {
 		MostFrequent *fizzbuzz.Config `json:"most_frequent"`
 		Count        int              `json:"count"`
 	}
-	s.mu.RLock()
-	for cfg, count := range s.m {
+	fb.mu.RLock()
+	for cfg, count := range fb.m {
 		if count > result.Count {
 			result.Count = count
 			cfg := cfg // capture range variable
 			result.MostFrequent = &cfg
 		}
 	}
-	s.mu.RUnlock()
+	fb.mu.RUnlock()
 	if err := json.NewEncoder(rw).Encode(result); err != nil {
 		log.Println("write error:", err)
 	}
 }
 
 // HandleStats is an HTTP handler that answers with a JSON object representing the most used Fizz buzz config.
-func (s *Stats) HandleStats(rw http.ResponseWriter, r *http.Request) {
 // If no previous call to fizzbuzz has been made, most_frequent.count is 0 and most_frequent.config doesn't exit.
+func (fb *Fizzbuzz) HandleStats(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if r.Method != http.MethodGet {
 		jsonErr(rw, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
@@ -144,8 +144,8 @@ func (s *Stats) HandleStats(rw http.ResponseWriter, r *http.Request) {
 			Config *fizzbuzz.Config `json:"config,omitempty"`
 		} `json:"most_frequent"`
 	}
-	s.mu.RLock()
-	for cfg, count := range s.m {
+	fb.mu.RLock()
+	for cfg, count := range fb.m {
 		if count > result.MostFrequent.Count {
 			result.MostFrequent.Count = count
 			cfg := cfg
@@ -156,7 +156,7 @@ func (s *Stats) HandleStats(rw http.ResponseWriter, r *http.Request) {
 			result.MostFrequent.Config = &cfg
 		}
 	}
-	s.mu.RUnlock()
+	fb.mu.RUnlock()
 	if err := json.NewEncoder(rw).Encode(result); err != nil {
 		log.Println("write error:", err)
 	}
