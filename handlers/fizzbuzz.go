@@ -127,7 +127,7 @@ func (fb *Fizzbuzz) HandleStatsV1(rw http.ResponseWriter, r *http.Request) {
 }
 
 // HandleStats is an HTTP handler that answers with a JSON object representing the most used Fizz buzz config.
-// If no previous call to fizzbuzz has been made, most_frequent.count is 0 and most_frequent.config doesn't exit.
+// If no previous call to fizzbuzz has been made, most_frequent.count is 0 and most_frequent.config doesn't exist.
 func (fb *Fizzbuzz) HandleStats(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("Content-Type", "application/json; charset=utf-8")
 	if r.Method != http.MethodGet {
