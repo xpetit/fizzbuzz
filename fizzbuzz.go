@@ -46,7 +46,7 @@ func Default() *Config {
 	}
 }
 
-// Ensure function implements interface.
+// Ensure type implements interface.
 var _ io.WriterTo = (*Config)(nil)
 
 // WriteTo writes a list of Fizz buzz values as a JSON array of strings, followed by a newline character.
