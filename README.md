@@ -109,13 +109,18 @@ The top-down list of dependencies is as follows:
 
 ### Performance
 
-`WriteTo` limits memory allocation, here are the results for 10, 1000, 1000000 and 10000000 Fizz buzz values:
+`WriteTo` limits memory allocation, here are the results from 0 to 10 millions Fizz buzz values:
 
 ```
-BenchmarkWriteTo/small-12     1843011          638 ns/op    105.04 MB/s    120 B/op    11 allocs/op
-BenchmarkWriteTo/medium-12      60092        19706 ns/op    370.29 MB/s    120 B/op    11 allocs/op
-BenchmarkWriteTo/big-12            57     20174285 ns/op    411.23 MB/s    151 B/op    11 allocs/op
-BenchmarkWriteTo/huge-12            5    203921401 ns/op    423.18 MB/s    430 B/op    11 allocs/op
+BenchmarkWriteTo/[limit:0e+00]-12   100000000         11 ns/op   268.82 MB/s     3 B/op   1 allocs/op
+BenchmarkWriteTo/[limit:1e+00]-12    3801452         314 ns/op    19.12 MB/s    80 B/op   8 allocs/op
+BenchmarkWriteTo/[limit:1e+01]-12    2356630         509 ns/op   131.71 MB/s    96 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:1e+02]-12     564086        2141 ns/op   325.50 MB/s    96 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:1e+03]-12      55982       19697 ns/op   370.47 MB/s    96 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:1e+04]-12       6004      195040 ns/op   391.19 MB/s    96 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:1e+05]-12        589     1999506 ns/op   398.25 MB/s    98 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:1e+06]-12         57    20156702 ns/op   411.59 MB/s   123 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:1e+07]-12          5   205326151 ns/op   420.29 MB/s   408 B/op   9 allocs/op
 ```
 
 The service stops writing values as soon as the API consumer no longer requests them.
@@ -135,15 +140,15 @@ The command used to measure HTTP throughput:
 curl -o /dev/null localhost:8080/api/v2/fizzbuzz?limit=10000000000
 ```
 
-In addition, [`wrk`](https://github.com/wg/wrk) reports 221734 requests/second with a random limit between 1 and 100:
+In addition, [`wrk`](https://github.com/wg/wrk) reports 250151 requests/second with a random limit between 1 and 100:
 
 ```
 Running 10s test @ http://localhost:8080/api/v2/fizzbuzz?limit=param_value
   4 threads and 400 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     2.14ms    2.52ms  29.34ms   85.42%
-    Req/Sec    55.99k     5.89k   71.20k    68.25%
-  2238244 requests in 10.09s, 0.99GB read
-Requests/sec: 221734.27
-Transfer/sec:    100.36MB
+    Latency     2.02ms    3.25ms  44.49ms   89.50%
+    Req/Sec    63.27k    14.84k   86.27k    57.83%
+  2517462 requests in 10.06s, 1.11GB read
+Requests/sec: 250150.61
+Transfer/sec:    113.18MB
 ```

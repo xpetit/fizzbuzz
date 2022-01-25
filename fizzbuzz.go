@@ -83,7 +83,11 @@ func (c *Config) WriteTo(w io.Writer) (n int64, err error) {
 	// Marshal JSON strings, it is safe to ignore the error because a string cannot cause one
 	s1, _ := json.Marshal(c.Str1)
 	s2, _ := json.Marshal(c.Str2)
-	s12, _ := json.Marshal(c.Str1 + c.Str2)
+
+	// Instead of marshalling str1+str2, reuse the previous JSON strings, without the quotes
+	s12 := make([]byte, 0, len(s1)-1+len(s2)-1) // Allocate a slice big enough to contain s1 and s2 without the quotes
+	s12 = append(s12, s1[:len(s1)-1]...)        // append [s1)
+	s12 = append(s12, s2[1:]...)                // append (s2]
 
 	// buf is used to accumulate the bytes for a Fizz buzz JSON string
 	var buf []byte

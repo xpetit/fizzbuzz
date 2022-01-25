@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
+	"math"
 	"os"
 	"strings"
 	"testing"
@@ -143,34 +145,19 @@ func TestWriteTo(t *testing.T) {
 	})
 }
 
-func withLimit(limit int) *fizzbuzz.Config {
-	d := fizzbuzz.Default()
-	d.Limit = limit
-	return d
-}
-
-var (
-	small  = withLimit(10)
-	medium = withLimit(1_000)
-	big    = withLimit(1_000_000)
-	huge   = withLimit(10_000_000)
-)
-
-// discard benchmarks f with io.Discard writer
-func discard(b *testing.B, c *fizzbuzz.Config) {
-	b.Helper()
-	for i := 0; i < b.N; i++ {
-		if n, err := c.WriteTo(io.Discard); err != nil {
-			b.Fatal(err)
-		} else {
-			b.SetBytes(n)
-		}
-	}
-}
-
+// BenchmarkWriteTo benchmarks WriteTo with a default config and a limit of n
 func BenchmarkWriteTo(b *testing.B) {
-	b.Run("small", func(b *testing.B) { discard(b, small) })
-	b.Run("medium", func(b *testing.B) { discard(b, medium) })
-	b.Run("big", func(b *testing.B) { discard(b, big) })
-	b.Run("huge", func(b *testing.B) { discard(b, huge) })
+	c := fizzbuzz.Default()
+	for n := -1; n <= 7; n++ {
+		c.Limit = int(math.Pow10(n))
+		b.Run(fmt.Sprintf("[limit:%.e]", float64(c.Limit)), func(b *testing.B) {
+			for i := 0; i < b.N; i++ {
+				if n, err := c.WriteTo(io.Discard); err != nil {
+					b.Fatal(err)
+				} else {
+					b.SetBytes(n)
+				}
+			}
+		})
+	}
 }
