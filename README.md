@@ -109,7 +109,7 @@ The top-down list of dependencies is as follows:
 
 ### Performance
 
-`WriteTo` limits memory allocation, here are the results from 0 to 10 millions Fizz buzz values:
+`WriteTo` limits memory allocation, here are the results from 0 to 10 million values of Fizz buzz:
 
 ```
 BenchmarkWriteTo/[limit:0e+00]-12   100000000         11 ns/op   268.82 MB/s     3 B/op   1 allocs/op
