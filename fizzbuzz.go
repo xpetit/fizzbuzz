@@ -52,7 +52,7 @@ var _ io.WriterTo = (*Config)(nil)
 // WriteTo writes a list of Fizz buzz values as a JSON array of strings, followed by a newline character.
 //
 // Attempting to write a Fizz buzz with negative or zero divisors causes WriteTo to return an ErrInvalidInput.
-// Any other errors reported may be due to w.WriteString or w.Write.
+// Any other errors reported may be due to w.Write.
 func (c *Config) WriteTo(w io.Writer) (n int64, err error) {
 	// Check the config validity
 	if c.Int1 < 1 {
