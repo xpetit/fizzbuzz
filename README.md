@@ -112,15 +112,15 @@ The top-down list of dependencies is as follows:
 `WriteTo` limits memory allocation, here are the results from 0 to 10 million values of Fizz buzz:
 
 ```
-BenchmarkWriteTo/[limit:0e+00]-12   100000000         11 ns/op   268.82 MB/s     3 B/op   1 allocs/op
-BenchmarkWriteTo/[limit:1e+00]-12    3801452         314 ns/op    19.12 MB/s    80 B/op   8 allocs/op
-BenchmarkWriteTo/[limit:1e+01]-12    2356630         509 ns/op   131.71 MB/s    96 B/op   9 allocs/op
-BenchmarkWriteTo/[limit:1e+02]-12     564086        2141 ns/op   325.50 MB/s    96 B/op   9 allocs/op
-BenchmarkWriteTo/[limit:1e+03]-12      55982       19697 ns/op   370.47 MB/s    96 B/op   9 allocs/op
-BenchmarkWriteTo/[limit:1e+04]-12       6004      195040 ns/op   391.19 MB/s    96 B/op   9 allocs/op
-BenchmarkWriteTo/[limit:1e+05]-12        589     1999506 ns/op   398.25 MB/s    98 B/op   9 allocs/op
-BenchmarkWriteTo/[limit:1e+06]-12         57    20156702 ns/op   411.59 MB/s   123 B/op   9 allocs/op
-BenchmarkWriteTo/[limit:1e+07]-12          5   205326151 ns/op   420.29 MB/s   408 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:0e+00]-12   100000000          11 ns/op   268.82 MB/s     3 B/op   1 allocs/op
+BenchmarkWriteTo/[limit:1e+00]-12     3801452         314 ns/op    19.12 MB/s    80 B/op   8 allocs/op
+BenchmarkWriteTo/[limit:1e+01]-12     2356630         509 ns/op   131.71 MB/s    96 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:1e+02]-12      564086        2141 ns/op   325.50 MB/s    96 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:1e+03]-12       55982       19697 ns/op   370.47 MB/s    96 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:1e+04]-12        6004      195040 ns/op   391.19 MB/s    96 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:1e+05]-12         589     1999506 ns/op   398.25 MB/s    98 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:1e+06]-12          57    20156702 ns/op   411.59 MB/s   123 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:1e+07]-12           5   205326151 ns/op   420.29 MB/s   408 B/op   9 allocs/op
 ```
 
 The service stops writing values as soon as the API consumer no longer requests them.
