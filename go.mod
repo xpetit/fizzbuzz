@@ -1,3 +1,3 @@
-module github.com/xpetit/fizzbuzz/v3
+module github.com/xpetit/fizzbuzz/v4
 
 go 1.17

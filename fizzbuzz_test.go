@@ -2,32 +2,32 @@ package fizzbuzz_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"io"
-	"math/rand"
 	"os"
 	"strings"
 	"testing"
 
-	"github.com/xpetit/fizzbuzz/v3"
+	"github.com/xpetit/fizzbuzz/v4"
 )
 
 func Example() {
-	fizzbuzz.Default().WriteInto(os.Stdout)
-	(&fizzbuzz.Config{Limit: 15, Int1: 3, Int2: 5, Str1: "a", Str2: "b"}).WriteInto(os.Stdout)
+	fizzbuzz.Default().WriteTo(os.Stdout)
+	(&fizzbuzz.Config{Limit: 15, Int1: 3, Int2: 5, Str1: "a", Str2: "b"}).WriteTo(os.Stdout)
 	// Output:
 	// ["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]
 	// ["1","2","a","4","b","a","7","8","a","b","11","a","13","14","ab"]
 }
 
-// write is a testing helper function that calls f and returns:
+// output is a testing helper function that calls f and returns:
 // - what it wrote in a trimmed string
 // - an error if one occured
 // It also asserts that there is one and only one final newline.
-func write(t *testing.T, f func(w io.Writer) error) (string, error) {
+func output(t *testing.T, c fizzbuzz.Config) (string, error) {
 	t.Helper()
 	var buf bytes.Buffer
-	if err := f(&buf); err != nil {
+	if _, err := c.WriteTo(&buf); err != nil {
 		return "", err
 	}
 	s := buf.String()
@@ -55,20 +55,25 @@ func runParallel(t *testing.T, name string, f func(t *testing.T)) bool {
 	})
 }
 
-// TestWriteInto tests the WriteInto function with valid, invalid configurations and compares it to WriteInto2.
+func format(c fizzbuzz.Config) string {
+	b, _ := json.Marshal(c)
+	return string(b)
+}
+
+// TestWriteTo tests the WriteTo function with valid and invalid configurations.
 // It uses the subtests introduced in Go 1.7, which gives fine-grained control over which test(s) to run.
 //
 // Run the comparison of the generated test case with a limit of 9:
 // go test -run '/compare/limit:9\b'  # Note the word-boundary regex anchor '\b' to avoid matching "limit:91"
 //
-// Run the tests where WriteInto should fail and has a negative int2:
+// Run the tests where WriteTo should fail and has a negative int2:
 // go test -run /fail/int2:-
 //
-// Run the tests where WriteInto shouldn't write any value:
+// Run the tests where WriteTo shouldn't write any value:
 // go test -run //limit:[0-]{1}
 //
 // For more information about subtests and sub-benchmarks, please visit https://go.dev/blog/subtests
-func TestWriteInto(t *testing.T) {
+func TestWriteTo(t *testing.T) {
 	type testCase struct {
 		input    fizzbuzz.Config
 		expected string
@@ -103,15 +108,14 @@ func TestWriteInto(t *testing.T) {
 		{input: fizzbuzz.Config{1, -1, 1, "", ""}},
 		{input: fizzbuzz.Config{1, 1, -1, "", ""}},
 	}
-	allTestCases := append(validCases, invalidCases...)
 
-	// tests valid cases (WriteInto should not return an error)
+	// tests valid cases (WriteTo should not return an error)
 	runParallel(t, "pass", func(t *testing.T) {
 		for _, tc := range validCases {
 			tc := tc // capture range variable
-			runParallel(t, tc.input.String(), func(t *testing.T) {
-				if got, err := write(t, tc.input.WriteInto); err != nil {
-					t.Fatal("WriteInto failed:", err)
+			runParallel(t, format(tc.input), func(t *testing.T) {
+				if got, err := output(t, tc.input); err != nil {
+					t.Fatal("WriteTo failed:", err)
 				} else if tc.expected != got {
 					t.Errorf("expected: %s, got: %s", tc.expected, got)
 				}
@@ -119,82 +123,20 @@ func TestWriteInto(t *testing.T) {
 		}
 	})
 
-	// tests invalid cases (WriteInto should return an error)
+	// tests invalid cases (WriteTo should return an error)
 	runParallel(t, "fail", func(t *testing.T) {
 		runParallel(t, "closed", func(t *testing.T) {
-			if err := fizzbuzz.Default().WriteInto(closed{}); err != errClosed {
-				t.Error("WriteInto should return the writer error, instead it returned:", err)
+			if _, err := fizzbuzz.Default().WriteTo(closed{}); err != errClosed {
+				t.Error("WriteTo should return the writer error, instead it returned:", err)
 			}
 		})
 
 		// tests invalid configurations
 		for _, tc := range invalidCases {
 			tc := tc // capture range variable
-			runParallel(t, tc.input.String(), func(t *testing.T) {
-				if _, err := write(t, tc.input.WriteInto); !errors.Is(err, fizzbuzz.ErrInvalidInput) {
-					t.Error("WriteInto should return an ErrInvalidInput")
-				}
-			})
-		}
-	})
-
-	// tests WriteInto and WriteInto2 side by side, reporting any inconsistencies
-	runParallel(t, "compare", func(t *testing.T) {
-		if testing.Short() {
-			t.SkipNow()
-		}
-
-		testCases := append([]testCase(nil), allTestCases...) // copy all test cases
-
-		// add valid test cases with a variable limit
-		for limit := -10; limit < 100; limit++ {
-			testCases = append(testCases, testCase{input: *withLimit(limit)})
-		}
-
-		// add random test cases
-		ss := []string{
-			``,
-			`a`,
-			`"`,
-			`"""""`,
-			"\u2063", // Invisible Separator
-			`abc`,
-			`1`,
-			`2`,
-			`12`,
-		}
-		randStr := func() (s string) {
-			for i := 0; i < rand.Intn(4); i++ {
-				s += ss[rand.Intn(len(ss))] // pick a random string from ss
-			}
-			return // the concatenation of 0 to 3 random strings from ss
-		}
-		for i := 0; i < 100; i++ {
-			testCases = append(testCases, testCase{input: fizzbuzz.Config{
-				Limit: rand.Intn(100) - 10, // between -10 and 89
-				Int1:  rand.Intn(100) - 10, // between -10 and 89
-				Int2:  rand.Intn(100) - 10, // between -10 and 89
-				Str1:  randStr(),
-				Str2:  randStr(),
-			}})
-		}
-
-		for _, tc := range testCases {
-			tc := tc // capture range variable
-			runParallel(t, tc.input.String(), func(t *testing.T) {
-				// make sure that WriteInto and WriteInto2 behave in the same way
-				b1, err1 := write(t, tc.input.WriteInto)
-				b2, err2 := write(t, tc.input.WriteInto2)
-				if err1 == nil && err2 != nil {
-					t.Errorf("WriteInto: %s, WriteInto2: %s", b1, err2)
-				} else if err1 != nil && err2 == nil {
-					t.Errorf("WriteInto: %s, WriteInto2: %s", err1, b2)
-				} else if err1 != nil && err2 != nil {
-					if errors.Is(err1, fizzbuzz.ErrInvalidInput) != errors.Is(err2, fizzbuzz.ErrInvalidInput) {
-						t.Errorf("WriteInto: %s, WriteInto2: %s", err1, err2)
-					}
-				} else if b1 != b2 { // err1 == nil && err2 == nil
-					t.Errorf("WriteInto: %s, WriteInto2: %s", b1, b2)
+			runParallel(t, format(tc.input), func(t *testing.T) {
+				if _, err := output(t, tc.input); !errors.Is(err, fizzbuzz.ErrInvalidInput) {
+					t.Error("WriteTo should return an ErrInvalidInput")
 				}
 			})
 		}
@@ -215,25 +157,20 @@ var (
 )
 
 // discard benchmarks f with io.Discard writer
-func discard(b *testing.B, f func(w io.Writer) error) {
+func discard(b *testing.B, c *fizzbuzz.Config) {
 	b.Helper()
 	for i := 0; i < b.N; i++ {
-		if err := f(io.Discard); err != nil {
+		if n, err := c.WriteTo(io.Discard); err != nil {
 			b.Fatal(err)
+		} else {
+			b.SetBytes(n)
 		}
 	}
 }
 
-func BenchmarkWriteInto(b *testing.B) {
-	b.Run("small", func(b *testing.B) { discard(b, small.WriteInto) })
-	b.Run("medium", func(b *testing.B) { discard(b, medium.WriteInto) })
-	b.Run("big", func(b *testing.B) { discard(b, big.WriteInto) })
-	b.Run("huge", func(b *testing.B) { discard(b, huge.WriteInto) })
-}
-
-func BenchmarkWriteInto2(b *testing.B) {
-	b.Run("small", func(b *testing.B) { discard(b, small.WriteInto2) })
-	b.Run("medium", func(b *testing.B) { discard(b, medium.WriteInto2) })
-	b.Run("big", func(b *testing.B) { discard(b, big.WriteInto2) })
-	b.Run("huge", func(b *testing.B) { discard(b, huge.WriteInto2) })
+func BenchmarkWriteTo(b *testing.B) {
+	b.Run("small", func(b *testing.B) { discard(b, small) })
+	b.Run("medium", func(b *testing.B) { discard(b, medium) })
+	b.Run("big", func(b *testing.B) { discard(b, big) })
+	b.Run("huge", func(b *testing.B) { discard(b, huge) })
 }

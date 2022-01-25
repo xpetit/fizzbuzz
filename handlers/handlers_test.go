@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/xpetit/fizzbuzz/v3/handlers"
+	"github.com/xpetit/fizzbuzz/v4/handlers"
 )
 
 // runParallel runs a parallel subtest.
@@ -49,21 +49,15 @@ func TestFizzbuzz(t *testing.T) {
 		}
 		for _, method := range invalidMethods {
 			method := method // capture range variable
-			var fb handlers.Fizzbuzz
-			handlerFuncs := map[string]http.HandlerFunc{
-				"Handle":        fb.Handle,
-				"HandleStats":   fb.HandleStats,
-				"HandleStatsV1": fb.HandleStatsV1,
-			}
-			for name, handle := range handlerFuncs {
-				name := name     // capture range variable
-				handle := handle // capture range variable
-				runParallel(t, method+" "+name, func(t *testing.T) {
-					if code := resp(method, "", handle).StatusCode; code != http.StatusMethodNotAllowed {
-						t.Error(method, name, "should not be allowed, received:", code, http.StatusText(code))
-					}
-				})
-			}
+			runParallel(t, method, func(t *testing.T) {
+				var fb handlers.Fizzbuzz
+				if code := resp(method, "", fb.Handle).StatusCode; code != http.StatusMethodNotAllowed {
+					t.Error(method, "Handle should not be allowed, received:", code, http.StatusText(code))
+				}
+				if code := resp(method, "", fb.HandleStats).StatusCode; code != http.StatusMethodNotAllowed {
+					t.Error(method, "HandleStats should not be allowed, received:", code, http.StatusText(code))
+				}
+			})
 		}
 	})
 	runParallel(t, "invalid query", func(t *testing.T) {
@@ -103,11 +97,6 @@ func TestFizzbuzz(t *testing.T) {
 			"str2":  {"b"},
 		}, fb.Handle); got != expected {
 			t.Fatal("unexpected output of Handle, got:", got, "expected:", expected)
-		}
-
-		expected = `{"most_frequent":{"limit":6,"int1":2,"int2":3,"str1":"a","str2":"b"},"count":1}`
-		if got := get(nil, fb.HandleStatsV1); got != expected {
-			t.Fatal("unexpected output of HandleStatsV1 after a call to Handle, got:", got, "expected:", expected)
 		}
 
 		expected = `{"most_frequent":{"count":1,"config":{"limit":6,"int1":2,"int2":3,"str1":"a","str2":"b"}}}`

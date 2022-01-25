@@ -29,7 +29,7 @@ Requirements:
 Use this command to directly update and run the service:
 
 ```
-go run github.com/xpetit/fizzbuzz/v3/cmd/fizzbuzzd@latest
+go run github.com/xpetit/fizzbuzz/v4/cmd/fizzbuzzd@latest
 ```
 
 To stop it, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
@@ -37,8 +37,8 @@ To stop it, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
 If you don't trust this program, you can use Docker. Clone this repository and run the following commands inside:
 
 ```
-docker build --tag github.com/xpetit/fizzbuzz/v3 .
-docker run --rm --publish 8080:8080 github.com/xpetit/fizzbuzz/v3
+docker build --tag github.com/xpetit/fizzbuzz/v4 .
+docker run --rm --publish 8080:8080 github.com/xpetit/fizzbuzz/v4
 ```
 
 When the service is running, you can query with it with `curl`:
@@ -103,24 +103,24 @@ This was discarded for the following reasons:
 
 The top-down list of dependencies is as follows:
 
-- `github.com/xpetit/fizzbuzz/v3/cmd/fizzbuzzd`: The main program, running the HTTP server.
-- `github.com/xpetit/fizzbuzz/v3/handlers`: The HTTP handlers.
-- `github.com/xpetit/fizzbuzz/v3`: The Fizz buzz writer `WriteInto`.
+- `github.com/xpetit/fizzbuzz/v4/cmd/fizzbuzzd`: The main program, running the HTTP server.
+- `github.com/xpetit/fizzbuzz/v4/handlers`: The HTTP handlers.
+- `github.com/xpetit/fizzbuzz/v4`: The Fizz buzz writer `WriteTo`.
 
 ### Performance
 
-For a Fizz buzz with a limit of one million, the naive approach (`WriteInto2`) takes about 5 times longer and uses 110 MB of memory, while the optimized implementation (`WriteInto`) does not allocate memory:
+`WriteTo` limits memory allocation, here are the results for 10, 1000, 1000000 and 10000000 Fizz buzz values:
 
 ```
-BenchmarkWriteInto/big-12    58    20081942 ns/op         142 B/op        9 allocs/op
-BenchmarkWriteInto2/big-12   12   100073916 ns/op   109733862 B/op   500030 allocs/op
+BenchmarkWriteTo/small-12     1843011          638 ns/op    105.04 MB/s    120 B/op    11 allocs/op
+BenchmarkWriteTo/medium-12      60092        19706 ns/op    370.29 MB/s    120 B/op    11 allocs/op
+BenchmarkWriteTo/big-12            57     20174285 ns/op    411.23 MB/s    151 B/op    11 allocs/op
+BenchmarkWriteTo/huge-12            5    203921401 ns/op    423.18 MB/s    430 B/op    11 allocs/op
 ```
 
-The biggest problem with the naive implementation is that it first generates the JSON array and then writes it, even if the writer has been closed before.
-This means that a buggy program looping through this API can create unnecessary work and resource exhaustion. The same is true for an attacker.
-The optimized implementation stops writing Fizz buzz values as soon as the API consumer no longer requests them.
+The service stops writing values as soon as the API consumer no longer requests them.
 
-An average of 190 MB/s actual throughput and 400 MB/s theoretical maximum throughput was measured in the following dedicated benchmark environment:
+An average of 190 MB/s actual throughput was measured in the following dedicated benchmark environment:
 
 |     |                                                  |
 | --- | ------------------------------------------------ |

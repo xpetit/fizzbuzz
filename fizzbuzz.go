@@ -7,27 +7,19 @@ import (
 	"io"
 	"math"
 	"strconv"
-	"strings"
 )
 
+// Config contains the Fizz buzz parameters
 type Config struct {
-	Limit int    `json:"limit"` // Limit is the last number (1 being the first)
+	Limit int    `json:"limit"` // Limit is the last number of the Fizz buzz suite (1 being the first)
 	Int1  int    `json:"int1"`  // Int1 is the first divisor
 	Int2  int    `json:"int2"`  // Int2 is the second divisor
-	Str1  string `json:"str1"`  // Str1 is the string to use when the number is divisible by Int1
-	Str2  string `json:"str2"`  // Str2 is the string to use when the number is divisible by Int2
+	Str1  string `json:"str1"`  // Str1 is the string that replaces the number when it is divisible by Int1
+	Str2  string `json:"str2"`  // Str2 is the string that replaces the number when it is divisible by Int2
 }
 
-// ErrInvalidInput is returned by WriteInto when attempting to write an invalid config.
+// ErrInvalidInput is returned by WriteTo when attempting to write an invalid config (negative or zero Int1/Int2).
 var ErrInvalidInput = errors.New("invalid input")
-
-// String formats the configuration, example:
-//   (&fizzbuzz.Config{Limit: 10, Int1: 2, Int2: 3, Str1: "fizz", Str2: "buzz"}).String()
-// returns
-//   `&fizzbuzz.config{limit:10,int1:2,int2:3,str1:"fizz",str2:"buzz"}`
-func (c *Config) String() string {
-	return strings.ToLower(strings.ReplaceAll(fmt.Sprintf("%#v", c), " ", ""))
-}
 
 // LessThan compares each exported field to determine which config is the "smallest".
 func (a *Config) LessThan(b *Config) bool {
@@ -43,7 +35,7 @@ func (a *Config) LessThan(b *Config) bool {
 	return a.Str2 < b.Str2
 }
 
-// Default returns a default configuration that gives all the values of the Fizz buzz.
+// Default returns a default configuration that gives all possible types of Fizz buzz values.
 func Default() *Config {
 	return &Config{
 		Limit: 10,
@@ -54,67 +46,44 @@ func Default() *Config {
 	}
 }
 
-// toString returns the Fizz buzz value as a string corresponding to a number.
-func (c *Config) toString(i int) string {
-	if i%c.Int1 == 0 {
-		if i%c.Int2 == 0 {
-			// i is divisible by both Int1 and Int2
-			return c.Str1 + c.Str2
-		}
-		// i is only divisible by Int1
-		return c.Str1
-	}
-	if i%c.Int2 == 0 {
-		// i is only divisible by Int2
-		return c.Str2
-	}
-	// i is not divisible by either Int1 or Int2
-	return strconv.Itoa(i)
-}
+// Ensure function implements interface.
+var _ io.WriterTo = (*Config)(nil)
 
-// WriteInto2 is a naive implementation of WriteInto for illustration and testing purposes.
-func (c *Config) WriteInto2(w io.Writer) error {
-	// Check the config validity
-	if c.Int1 < 1 {
-		return fmt.Errorf("%w: Int1 must be strictly positive", ErrInvalidInput)
-	} else if c.Int2 < 1 {
-		return fmt.Errorf("%w: Int2 must be strictly positive", ErrInvalidInput)
-	}
-
-	ss := []string{}
-	for i := 1; i <= c.Limit; i++ {
-		ss = append(ss, c.toString(i))
-	}
-	return json.NewEncoder(w).Encode(ss)
-}
-
-// WriteInto writes a list of Fizz buzz values as a JSON array of strings, followed by a newline character.
+// WriteTo writes a list of Fizz buzz values as a JSON array of strings, followed by a newline character.
 //
-// Attempting to write a Fizz buzz with negative or zero divisors causes WriteInto to return an ErrInvalidInput.
+// Attempting to write a Fizz buzz with negative or zero divisors causes WriteTo to return an ErrInvalidInput.
 // Any other errors reported may be due to w.WriteString or w.Write.
-func (c *Config) WriteInto(w io.Writer) error {
+func (c *Config) WriteTo(w io.Writer) (n int64, err error) {
 	// Check the config validity
 	if c.Int1 < 1 {
-		return fmt.Errorf("%w: Int1 must be strictly positive", ErrInvalidInput)
+		return 0, fmt.Errorf("%w: Int1 must be strictly positive", ErrInvalidInput)
 	} else if c.Int2 < 1 {
-		return fmt.Errorf("%w: Int2 must be strictly positive", ErrInvalidInput)
+		return 0, fmt.Errorf("%w: Int2 must be strictly positive", ErrInvalidInput)
+	}
+
+	// write accumulates the n bytes and returns false if the writing failed
+	write := func(b []byte) bool {
+		var nn int
+		nn, err = w.Write(b)
+		n += int64(nn)
+		return err == nil
 	}
 
 	if c.Limit < 1 {
 		// Fizz buzz starts with 1, so return an empty array
-		_, err := io.WriteString(w, "[]\n")
-		return err
+		write([]byte("[]\n"))
+		return
 	}
 
 	// Open the JSON array
-	if _, err := io.WriteString(w, "["); err != nil {
-		return err
+	if !write([]byte{'['}) {
+		return
 	}
 
 	// Marshal JSON strings, it is safe to ignore the error because a string cannot cause one
-	s12, _ := json.Marshal(c.Str1 + c.Str2)
 	s1, _ := json.Marshal(c.Str1)
 	s2, _ := json.Marshal(c.Str2)
+	s12, _ := json.Marshal(c.Str1 + c.Str2)
 
 	// buf is used to accumulate the bytes for a Fizz buzz JSON string
 	var buf []byte
@@ -151,8 +120,8 @@ func (c *Config) WriteInto(w io.Writer) error {
 		}
 
 		// Finally, write the buffer
-		if _, err := w.Write(buf); err != nil {
-			return err
+		if !write(buf) {
+			return
 		}
 
 		// This prevents overflow
@@ -161,6 +130,6 @@ func (c *Config) WriteInto(w io.Writer) error {
 		}
 	}
 	// Close JSON array and add a newline to be consistent with (*json.Encoder).Encode
-	_, err := io.WriteString(w, "]\n")
-	return err
+	write([]byte("]\n"))
+	return
 }
