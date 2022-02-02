@@ -9,7 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/xpetit/fizzbuzz/v4/handlers"
+	"github.com/xpetit/fizzbuzz/v5/handlers"
+	"github.com/xpetit/fizzbuzz/v5/stats"
 )
 
 // runParallel runs a parallel subtest.
@@ -50,7 +51,8 @@ func TestFizzbuzz(t *testing.T) {
 		for _, method := range invalidMethods {
 			method := method // capture range variable
 			runParallel(t, method, func(t *testing.T) {
-				var fb handlers.Fizzbuzz
+				fb := handlers.Fizzbuzz{Stats: &stats.Memory{}}
+
 				if code := resp(method, "", fb.Handle).StatusCode; code != http.StatusMethodNotAllowed {
 					t.Error(method, "Handle should not be allowed, received:", code, http.StatusText(code))
 				}
@@ -73,7 +75,8 @@ func TestFizzbuzz(t *testing.T) {
 		for _, query := range invalidQueries {
 			query := query // capture range variable
 			runParallel(t, query, func(t *testing.T) {
-				var fb handlers.Fizzbuzz
+				fb := handlers.Fizzbuzz{Stats: &stats.Memory{}}
+
 				if code := resp("", query, fb.Handle).StatusCode; code != http.StatusBadRequest {
 					t.Error(query, "query should not be allowed, received:", code, http.StatusText(code))
 				}
@@ -81,7 +84,7 @@ func TestFizzbuzz(t *testing.T) {
 		}
 	})
 	runParallel(t, "pass", func(t *testing.T) {
-		var fb handlers.Fizzbuzz
+		fb := handlers.Fizzbuzz{Stats: &stats.Memory{}}
 
 		expected := `{"most_frequent":{"count":0}}`
 		if got := get(nil, fb.HandleStats); got != expected {

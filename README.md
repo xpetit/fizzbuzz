@@ -18,7 +18,6 @@ The server is:
 
 - Ready for production
 - Easy to maintain by other developers
-- Not using external libraries (as requested)
 
 ## Usage
 
@@ -29,7 +28,7 @@ Requirements:
 Use this command to directly update and run the service:
 
 ```
-go run github.com/xpetit/fizzbuzz/v4/cmd/fizzbuzzd@latest
+go run github.com/xpetit/fizzbuzz/v5/cmd/fizzbuzzd@latest
 ```
 
 To stop it, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
@@ -37,8 +36,8 @@ To stop it, type <kbd>CTRL</kbd>-<kbd>C</kbd>.
 If you don't trust this program, you can use Docker. Clone this repository and run the following commands inside:
 
 ```
-docker build --tag github.com/xpetit/fizzbuzz/v4 .
-docker run --rm --publish 8080:8080 github.com/xpetit/fizzbuzz/v4
+docker build --tag github.com/xpetit/fizzbuzz/v5 .
+docker run --rm --publish 8080:8080 github.com/xpetit/fizzbuzz/v5
 ```
 
 When the service is running, you can query with it with `curl`:
@@ -95,7 +94,7 @@ In writing this library, several considerations were taken into account:
 This was discarded for the following reasons:
 
 1. If requirements change, it is easy to adapt the Fizz buzz algorithm because it is simple.
-2. As described in the [Performance](#performance) section, a library that streams JSON strings and one that generates them all at once are a very different story. One cannot be the generalized/abstract version of another.
+2. A library that streams JSON strings and one that generates them all at once are a very different story. One cannot be the generalized/abstract version of another.
 
 ![relevant XKCD](https://imgs.xkcd.com/comics/the_general_problem.png)
 
@@ -103,9 +102,10 @@ This was discarded for the following reasons:
 
 The top-down list of dependencies is as follows:
 
-- `github.com/xpetit/fizzbuzz/v4/cmd/fizzbuzzd`: The main program, running the HTTP server.
-- `github.com/xpetit/fizzbuzz/v4/handlers`: The HTTP handlers.
-- `github.com/xpetit/fizzbuzz/v4`: The Fizz buzz writer `WriteTo`.
+- `github.com/xpetit/fizzbuzz/v5/cmd/fizzbuzzd`: The main program, running the HTTP server.
+- `github.com/xpetit/fizzbuzz/v5/handlers`: The HTTP handlers.
+- `github.com/xpetit/fizzbuzz/v5/stats`: The statistics services.
+- `github.com/xpetit/fizzbuzz/v5`: The Fizz buzz writer `WriteTo`.
 
 ### Performance
 
@@ -125,22 +125,15 @@ BenchmarkWriteTo/[limit:1e+07]-12           5   205326151 ns/op   420.29 MB/s   
 
 The service stops writing values as soon as the API consumer no longer requests them.
 
-An average of 190 MB/s actual throughput was measured in the following dedicated benchmark environment:
-
 |     |                                                  |
 | --- | ------------------------------------------------ |
 | CPU | Intel Xeon E-2236 CPU @3.40GHz                   |
 | RAM | 32 GB ECC 2666 MHz                               |
+| HDD | HGST HUS726T4TALA6L1                             |
 | OS  | Debian Stable (`scaling_governor = performance`) |
 | Go  | Version 1.17.5                                   |
 
-The command used to measure HTTP throughput:
-
-```
-curl -o /dev/null localhost:8080/api/v2/fizzbuzz?limit=10000000000
-```
-
-In addition, [`wrk`](https://github.com/wg/wrk) reports 250151 requests/second with a random limit between 1 and 100:
+[`wrk`](https://github.com/wg/wrk) reports 250151 requests/second with a random limit between 1 and 100 (using `-db off` command-line argument):
 
 ```
 Running 10s test @ http://localhost:8080/api/v2/fizzbuzz?limit=param_value
@@ -151,4 +144,30 @@ Running 10s test @ http://localhost:8080/api/v2/fizzbuzz?limit=param_value
   2517462 requests in 10.06s, 1.11GB read
 Requests/sec: 250150.61
 Transfer/sec:    113.18MB
+```
+
+Leaving the database enabled:
+
+```
+Running 10s test @ http://localhost:8080/api/v2/fizzbuzz?limit=param_value
+  4 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    64.81ms  111.41ms   1.07s    88.31%
+    Req/Sec     4.49k   536.42     6.13k    81.00%
+  178542 requests in 10.03s, 80.75MB read
+Requests/sec:  17803.49
+Transfer/sec:      8.05MB
+```
+
+And with `-db :memory:` command-line argument ([SQLite in-memory DB](https://www.sqlite.org/inmemorydb.html)):
+
+```
+Running 10s test @ http://localhost:8080/api/v2/fizzbuzz?limit=param_value
+  4 threads and 400 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    40.36ms   69.36ms 686.09ms   88.09%
+    Req/Sec     7.41k   558.16     8.96k    68.75%
+  295090 requests in 10.03s, 133.64MB read
+Requests/sec:  29427.95
+Transfer/sec:     13.33MB
 ```

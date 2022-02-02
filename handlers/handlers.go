@@ -8,15 +8,16 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"sync"
 
-	"github.com/xpetit/fizzbuzz/v4"
+	"github.com/xpetit/fizzbuzz/v5"
 )
 
-// Fizzbuzz holds a protected (thread safe) hit count.
+// Fizzbuzz is an HTTP handler that serves a Fizzbuzz endpoint with statistics.
 type Fizzbuzz struct {
-	mu sync.RWMutex
-	m  map[fizzbuzz.Config]int
+	Stats interface {
+		Increment(cfg *fizzbuzz.Config) error
+		MostFrequent() (count int, cfg *fizzbuzz.Config, err error)
+	}
 }
 
 // setInt sets the int pointed to by p to the value found in the values, or a default value.
@@ -86,13 +87,8 @@ func (fb *Fizzbuzz) Handle(rw http.ResponseWriter, r *http.Request) {
 		} else {
 			log.Println("write error:", err)
 		}
-	} else {
-		fb.mu.Lock()
-		if fb.m == nil {
-			fb.m = map[fizzbuzz.Config]int{}
-		}
-		fb.m[c]++
-		fb.mu.Unlock()
+	} else if err := fb.Stats.Increment(&c); err != nil {
+		log.Println("stats.increment:", err)
 	}
 }
 
@@ -108,25 +104,19 @@ func (fb *Fizzbuzz) HandleStats(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	count, cfg, err := fb.Stats.MostFrequent()
+	if err != nil {
+		log.Println("stats.mostfrequent:", err)
+		jsonErr(rw, err.Error(), http.StatusInternalServerError)
+		return
+	}
 	var result struct {
 		MostFrequent struct {
 			Count  int              `json:"count"`
 			Config *fizzbuzz.Config `json:"config,omitempty"`
 		} `json:"most_frequent"`
 	}
-	fb.mu.RLock()
-	for cfg, count := range fb.m {
-		if count > result.MostFrequent.Count {
-			result.MostFrequent.Count = count
-			cfg := cfg
-			result.MostFrequent.Config = &cfg
-		} else if count == result.MostFrequent.Count && cfg.LessThan(result.MostFrequent.Config) {
-			// Same hit count, the configs are differentiated because the "iteration order over maps is not specified" (Go spec)
-			cfg := cfg
-			result.MostFrequent.Config = &cfg
-		}
-	}
-	fb.mu.RUnlock()
+	result.MostFrequent.Count, result.MostFrequent.Config = count, cfg
 	if err := json.NewEncoder(rw).Encode(result); err != nil {
 		log.Println("write error:", err)
 	}

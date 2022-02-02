@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-// Config contains the Fizz buzz parameters
+// Config contains the Fizz buzz parameters.
 type Config struct {
 	Limit int    `json:"limit"` // Limit is the last number of the Fizz buzz suite (1 being the first)
 	Int1  int    `json:"int1"`  // Int1 is the first divisor
@@ -25,11 +25,14 @@ var ErrInvalidInput = errors.New("invalid input")
 func (a *Config) LessThan(b *Config) bool {
 	if a.Limit != b.Limit {
 		return a.Limit < b.Limit
-	} else if a.Int1 != b.Int1 {
+	}
+	if a.Int1 != b.Int1 {
 		return a.Int1 < b.Int1
-	} else if a.Int2 != b.Int2 {
+	}
+	if a.Int2 != b.Int2 {
 		return a.Int2 < b.Int2
-	} else if a.Str1 != b.Str1 {
+	}
+	if a.Str1 != b.Str1 {
 		return a.Str1 < b.Str1
 	}
 	return a.Str2 < b.Str2
@@ -57,7 +60,8 @@ func (c *Config) WriteTo(w io.Writer) (n int64, err error) {
 	// Check the config validity
 	if c.Int1 < 1 {
 		return 0, fmt.Errorf("%w: Int1 must be strictly positive", ErrInvalidInput)
-	} else if c.Int2 < 1 {
+	}
+	if c.Int2 < 1 {
 		return 0, fmt.Errorf("%w: Int2 must be strictly positive", ErrInvalidInput)
 	}
 

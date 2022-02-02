@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/xpetit/fizzbuzz/v4"
+	"github.com/xpetit/fizzbuzz/v5"
 )
 
 func Example() {
@@ -24,7 +24,7 @@ func Example() {
 
 // output is a testing helper function that calls f and returns:
 // - what it wrote in a trimmed string
-// - an error if one occured
+// - an error if one occurred
 // It also asserts that there is one and only one final newline.
 func output(t *testing.T, c fizzbuzz.Config) (string, error) {
 	t.Helper()
@@ -36,7 +36,8 @@ func output(t *testing.T, c fizzbuzz.Config) (string, error) {
 	i := strings.LastIndexByte(s, '\n')
 	if i == -1 || i != len(s)-1 {
 		t.Fatal("missing final newline")
-	} else if strings.LastIndexByte(s[:i], '\n') != -1 {
+	}
+	if strings.LastIndexByte(s[:i], '\n') != -1 {
 		t.Fatal("more than one final newline")
 	}
 	return s[:i], nil // trims final newline
@@ -143,6 +144,23 @@ func TestWriteTo(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestLessThan(t *testing.T) {
+	testCases := [][2]fizzbuzz.Config{
+		{{0, 0, 0, "", ""}, {0, 0, 0, "", "a"}},
+		{{0, 0, 0, "", ""}, {0, 0, 0, "a", ""}},
+		{{0, 0, 0, "", ""}, {0, 0, 1, "", ""}},
+		{{0, 0, 0, "", ""}, {0, 1, 0, "", ""}},
+		{{0, 0, 0, "", ""}, {1, 0, 0, "", ""}},
+		{{1, 2, 3, "a", "b"}, {1, 2, 3, "a", "c"}},
+		{{1, 2, 3, "a", "b"}, {2, 3, 4, "z", "z"}},
+	}
+	for _, tc := range testCases {
+		if !tc[0].LessThan(&tc[1]) {
+			t.Error(tc[0], "should be less than", tc[1])
+		}
+	}
 }
 
 // BenchmarkWriteTo benchmarks WriteTo with a default config and a limit of n

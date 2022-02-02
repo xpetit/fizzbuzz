@@ -4,7 +4,7 @@ import (
 	"flag"
 	"os"
 
-	"github.com/xpetit/fizzbuzz/v4"
+	"github.com/xpetit/fizzbuzz/v5"
 )
 
 func main() {
