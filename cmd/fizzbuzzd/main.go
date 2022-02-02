@@ -17,7 +17,7 @@ import (
 	"github.com/xpetit/fizzbuzz/v5/stats"
 )
 
-func Main() (err error) {
+func Main() error {
 	// Setup signal handler
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
