@@ -28,6 +28,9 @@ type Memory struct {
 }
 
 func (s *Memory) Increment(cfg *fizzbuzz.Config) error {
+	if cfg == nil {
+		cfg = &fizzbuzz.Config{}
+	}
 	s.mu.Lock()
 	if s.m == nil {
 		s.m = map[fizzbuzz.Config]int{}
@@ -193,6 +196,9 @@ func Open(ctx context.Context, dataSourceName string) (*DB, error) {
 }
 
 func (s *DB) Increment(cfg *fizzbuzz.Config) error {
+	if cfg == nil {
+		cfg = &fizzbuzz.Config{}
+	}
 	tx, err := s.db.BeginTx(s.ctx, nil)
 	if err != nil {
 		return err
