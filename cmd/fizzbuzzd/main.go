@@ -13,8 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
-
 	"github.com/xpetit/fizzbuzz/v5/handlers"
 	"github.com/xpetit/fizzbuzz/v5/stats"
 )
