@@ -93,8 +93,8 @@ func Main() error {
 		return fmt.Errorf("could not shutdown HTTP server: %w", err)
 	}
 
-	if statsService, ok := statsService.(*stats.DB); ok {
-		return statsService.Close()
+	if statsDB, ok := statsService.(*stats.DB); ok {
+		return statsDB.Close()
 	}
 
 	return nil
