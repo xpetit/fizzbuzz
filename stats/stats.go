@@ -3,11 +3,14 @@ package stats
 import (
 	"context"
 	"database/sql"
+	"log"
+	"net/url"
 	"runtime"
 	"strings"
 	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
+
 	"github.com/xpetit/fizzbuzz/v5"
 )
 
@@ -69,29 +72,30 @@ type DB struct {
 
 func Open(ctx context.Context, dataSourceName string) (*DB, error) {
 	// Open database
-	db, err := sql.Open("sqlite3", dataSourceName)
+	db, err := sql.Open("sqlite3", dataSourceName+"?"+url.Values{
+		"_busy_timeout":        {"5000"},
+		"_foreign_keys":        {"true"},
+		"_journal_mode":        {"wal"},
+		"_synchronous":         {"normal"},
+		"_case_sensitive_like": {"true"},
+	}.Encode())
 	if err != nil {
 		return nil, err
 	}
 
 	// Adjust database/sql settings to SQLite
 	// This avoids several problems: ever-growing WAL file, file handle exhaustion, etc...
-	if strings.Contains(dataSourceName, ":memory:") {
+	if strings.Contains(dataSourceName, "memory") {
 		db.SetMaxOpenConns(1)
 	} else {
 		db.SetMaxOpenConns(runtime.NumCPU())
-		db.SetMaxIdleConns(0)
+		db.SetMaxIdleConns(runtime.NumCPU())
 	}
 
 	// Improve SQLite performance and reliability
 	if _, err := db.ExecContext(ctx, `
-		pragma busy_timeout        = 5000;
-		pragma case_sensitive_like = true;
-		pragma foreign_keys        = true;
-		pragma journal_mode        = wal;
-		pragma synchronous         = full;
-		pragma wal_autocheckpoint  = 0;
-		pragma temp_store          = memory;
+		pragma wal_autocheckpoint = 0;
+		pragma temp_store         = memory;
 	`); err != nil {
 		return nil, err
 	}
@@ -195,7 +199,30 @@ func Open(ctx context.Context, dataSourceName string) (*DB, error) {
 	}, nil
 }
 
+var (
+	i  int
+	m  sync.Mutex
+	wg sync.WaitGroup
+)
+
 func (s *DB) Increment(cfg *fizzbuzz.Config) error {
+	m.Lock()
+	i++
+	if i == 100_000 {
+		i = 0
+		wg.Wait()
+		var failed bool
+		if err := s.db.QueryRow(`pragma wal_checkpoint(restart)`).Scan(&failed, new(int), new(int)); err != nil {
+			m.Unlock()
+			return err
+		}
+		if failed {
+			log.Println("pragma wal_checkpoint(restart) failed")
+		}
+	}
+	m.Unlock()
+	wg.Add(1)
+	defer wg.Done()
 	if cfg == nil {
 		cfg = &fizzbuzz.Config{}
 	}
