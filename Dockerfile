@@ -11,9 +11,7 @@ RUN apk add --no-cache build-base
 WORKDIR /app
 
 # Download and cache all dependencies of the main module
-COPY .build .build
 COPY go.mod go.sum ./
-RUN go build ./.build
 RUN go mod download
 
 # Build program
@@ -22,7 +20,9 @@ COPY cmd cmd
 COPY handlers handlers
 COPY stats stats
 # -ldflags "-s -w" reduces the binary size (-s: disable symbol table, -w: disable DWARF generation)
-RUN go build -ldflags "-s -w" ./cmd/fizzbuzzd
+RUN --mount=type=cache,target=/root/.cache/go-build \
+	--mount=type=cache,target=/go/pkg \
+	go build -ldflags "-s -w" ./cmd/fizzbuzzd
 
 
 FROM alpine
