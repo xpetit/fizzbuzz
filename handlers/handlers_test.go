@@ -38,6 +38,8 @@ func get(values url.Values, handle http.HandlerFunc) string {
 
 func TestFizzbuzz(t *testing.T) {
 	runParallel(t, "invalid method", func(t *testing.T) {
+		fb := handlers.Fizzbuzz(stats.Memory())
+
 		invalidMethods := []string{
 			http.MethodHead,
 			http.MethodPost,
@@ -51,8 +53,6 @@ func TestFizzbuzz(t *testing.T) {
 		for _, method := range invalidMethods {
 			method := method // capture range variable
 			runParallel(t, method, func(t *testing.T) {
-				fb := handlers.Fizzbuzz{Stats: &stats.Memory{}}
-
 				if code := resp(method, "", fb.Handle).StatusCode; code != http.StatusMethodNotAllowed {
 					t.Error(method, "Handle should not be allowed, received:", code, http.StatusText(code))
 				}
@@ -62,7 +62,10 @@ func TestFizzbuzz(t *testing.T) {
 			})
 		}
 	})
+
 	runParallel(t, "invalid query", func(t *testing.T) {
+		fb := handlers.Fizzbuzz(stats.Memory())
+
 		invalidQueries := []string{
 			"?limit=a",
 			"?int1=a",
@@ -75,16 +78,15 @@ func TestFizzbuzz(t *testing.T) {
 		for _, query := range invalidQueries {
 			query := query // capture range variable
 			runParallel(t, query, func(t *testing.T) {
-				fb := handlers.Fizzbuzz{Stats: &stats.Memory{}}
-
 				if code := resp("", query, fb.Handle).StatusCode; code != http.StatusBadRequest {
 					t.Error(query, "query should not be allowed, received:", code, http.StatusText(code))
 				}
 			})
 		}
 	})
+
 	runParallel(t, "pass", func(t *testing.T) {
-		fb := handlers.Fizzbuzz{Stats: &stats.Memory{}}
+		fb := handlers.Fizzbuzz(stats.Memory())
 
 		expected := `{"most_frequent":{"count":0}}`
 		if got := get(nil, fb.HandleStats); got != expected {
@@ -102,7 +104,7 @@ func TestFizzbuzz(t *testing.T) {
 			t.Fatal("unexpected output of Handle, got:", got, "expected:", expected)
 		}
 
-		expected = `{"most_frequent":{"count":1,"config":{"limit":6,"int1":2,"int2":3,"str1":"a","str2":"b"}}}`
+		expected = `{"most_frequent":{"config":{"str1":"a","str2":"b","limit":6,"int1":2,"int2":3},"count":1}}`
 		if got := get(nil, fb.HandleStats); got != expected {
 			t.Fatal("unexpected output of HandleStats after a call to Handle, got:", got, "expected:", expected)
 		}
@@ -114,7 +116,7 @@ func TestFizzbuzz(t *testing.T) {
 		for i := 0; i < 100; i++ {
 			i := i // capture range variable
 			runParallel(t, strconv.Itoa(i), func(t *testing.T) {
-				expected := `{"most_frequent":{"count":1,"config":{"limit":6,"int1":2,"int2":3,"str1":"a","str2":"b"}}}`
+				expected := `{"most_frequent":{"config":{"str1":"a","str2":"b","limit":6,"int1":2,"int2":3},"count":1}}`
 				if got := get(nil, fb.HandleStats); got != expected {
 					t.Fatal("unexpected output of HandleStats after a call to Handle, got:", got, "expected:", expected)
 				}

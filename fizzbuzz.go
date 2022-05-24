@@ -11,18 +11,18 @@ import (
 
 // Config contains the Fizz buzz parameters.
 type Config struct {
+	Str1  string `json:"str1"`  // Str1 is the string that replaces the number when it is divisible by Int1
+	Str2  string `json:"str2"`  // Str2 is the string that replaces the number when it is divisible by Int2
 	Limit int    `json:"limit"` // Limit is the last number of the Fizz buzz suite (1 being the first)
 	Int1  int    `json:"int1"`  // Int1 is the first divisor
 	Int2  int    `json:"int2"`  // Int2 is the second divisor
-	Str1  string `json:"str1"`  // Str1 is the string that replaces the number when it is divisible by Int1
-	Str2  string `json:"str2"`  // Str2 is the string that replaces the number when it is divisible by Int2
 }
 
 // ErrInvalidInput is returned by WriteTo when attempting to write an invalid config (negative or zero Int1/Int2).
 var ErrInvalidInput = errors.New("invalid input")
 
 // LessThan compares each exported field to determine which config is the "smallest".
-func (a *Config) LessThan(b *Config) bool {
+func (a Config) LessThan(b Config) bool {
 	if a.Limit != b.Limit {
 		return a.Limit < b.Limit
 	}
@@ -39,13 +39,13 @@ func (a *Config) LessThan(b *Config) bool {
 }
 
 // Default returns a default configuration that gives all possible types of Fizz buzz values.
-func Default() *Config {
-	return &Config{
+func Default() Config {
+	return Config{
+		Str1:  "fizz",
+		Str2:  "buzz",
 		Limit: 10,
 		Int1:  2,
 		Int2:  3,
-		Str1:  "fizz",
-		Str2:  "buzz",
 	}
 }
 

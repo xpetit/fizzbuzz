@@ -3,7 +3,6 @@ package fizzbuzz_test
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -15,8 +14,12 @@ import (
 )
 
 func Example() {
-	fizzbuzz.Default().WriteTo(os.Stdout)
-	(&fizzbuzz.Config{Limit: 15, Int1: 3, Int2: 5, Str1: "a", Str2: "b"}).WriteTo(os.Stdout)
+	c := fizzbuzz.Default()
+	c.WriteTo(os.Stdout)
+
+	c = fizzbuzz.Config{Limit: 15, Int1: 3, Int2: 5, Str1: "a", Str2: "b"}
+	c.WriteTo(os.Stdout)
+
 	// Output:
 	// ["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]
 	// ["1","2","a","4","b","a","7","8","a","b","11","a","13","14","ab"]
@@ -33,22 +36,20 @@ func output(t *testing.T, c fizzbuzz.Config) (string, error) {
 		return "", err
 	}
 	s := buf.String()
-	i := strings.LastIndexByte(s, '\n')
-	if i == -1 || i != len(s)-1 {
+
+	if s == "" {
 		t.Fatal("missing final newline")
 	}
-	if strings.LastIndexByte(s[:i], '\n') != -1 {
+	if s[len(s)-1] != '\n' {
+		t.Fatal("missing final newline")
+	}
+	s = s[:len(s)-1] // trims final newline
+
+	if strings.IndexByte(s, '\n') != -1 {
 		t.Fatal("more than one final newline")
 	}
-	return s[:i], nil // trims final newline
+	return s, nil
 }
-
-// closed implements io.Writer and always returns a errClosed error.
-type closed struct{}
-
-var errClosed = errors.New("writer is closed")
-
-func (closed) Write([]byte) (int, error) { return 0, errClosed }
 
 // runParallel runs a parallel subtest.
 func runParallel(t *testing.T, name string, f func(t *testing.T)) bool {
@@ -82,34 +83,34 @@ func TestWriteTo(t *testing.T) {
 		expected string
 	}
 	validCases := []testCase{
-		{fizzbuzz.Config{-1, 1, 1, "", ""}, `[]`},
-		{fizzbuzz.Config{-1, 1, 1, "a", ""}, `[]`},
-		{fizzbuzz.Config{-1, 1, 1, "a", "a"}, `[]`},
-		{fizzbuzz.Config{0, 1, 1, "", ""}, `[]`},
-		{fizzbuzz.Config{0, 1, 1, "", "a"}, `[]`},
-		{fizzbuzz.Config{1, 1, 1, "", ""}, `[""]`},
-		{fizzbuzz.Config{1, 1, 1, "", "a"}, `["a"]`},
-		{fizzbuzz.Config{1, 1, 1, "a", ""}, `["a"]`},
-		{fizzbuzz.Config{1, 1, 1, "a", "b"}, `["ab"]`},
-		{fizzbuzz.Config{1, 2, 2, "", ""}, `["1"]`},
-		{fizzbuzz.Config{1, 2, 3, "", ""}, `["1"]`},
-		{fizzbuzz.Config{2, 1, 2, "a", "b"}, `["a","ab"]`},
-		{fizzbuzz.Config{2, 2, 3, "a", "b"}, `["1","a"]`},
-		{fizzbuzz.Config{2, 3, 1, "a", "b"}, `["b","b"]`},
-		{fizzbuzz.Config{2, 3, 3, "a", "b"}, `["1","2"]`},
-		{fizzbuzz.Config{3, 3, 3, "a", "b"}, `["1","2","ab"]`},
-		{fizzbuzz.Config{3, 3, 4, "a", "b"}, `["1","2","a"]`},
-		{fizzbuzz.Config{4, 3, 4, "a", "b"}, `["1","2","a","b"]`},
-		{fizzbuzz.Config{6, 2, 3, "a", "b"}, `["1","a","b","a","5","ab"]`},
-		{fizzbuzz.Config{1, 1, 1, `"`, ""}, `["\""]`},
-		{fizzbuzz.Config{13, 3, 4, "fizz", "buzz"}, `["1","2","fizz","buzz","5","fizz","7","buzz","fizz","10","11","fizzbuzz","13"]`},
-		{*fizzbuzz.Default(), `["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]`},
+		{fizzbuzz.Config{"", "", -1, 1, 1}, `[]`},
+		{fizzbuzz.Config{"a", "", -1, 1, 1}, `[]`},
+		{fizzbuzz.Config{"a", "a", -1, 1, 1}, `[]`},
+		{fizzbuzz.Config{"", "", 0, 1, 1}, `[]`},
+		{fizzbuzz.Config{"", "a", 0, 1, 1}, `[]`},
+		{fizzbuzz.Config{"", "", 1, 1, 1}, `[""]`},
+		{fizzbuzz.Config{"", "a", 1, 1, 1}, `["a"]`},
+		{fizzbuzz.Config{"a", "", 1, 1, 1}, `["a"]`},
+		{fizzbuzz.Config{"a", "b", 1, 1, 1}, `["ab"]`},
+		{fizzbuzz.Config{"", "", 1, 2, 2}, `["1"]`},
+		{fizzbuzz.Config{"", "", 1, 2, 3}, `["1"]`},
+		{fizzbuzz.Config{"a", "b", 2, 1, 2}, `["a","ab"]`},
+		{fizzbuzz.Config{"a", "b", 2, 2, 3}, `["1","a"]`},
+		{fizzbuzz.Config{"a", "b", 2, 3, 1}, `["b","b"]`},
+		{fizzbuzz.Config{"a", "b", 2, 3, 3}, `["1","2"]`},
+		{fizzbuzz.Config{"a", "b", 3, 3, 3}, `["1","2","ab"]`},
+		{fizzbuzz.Config{"a", "b", 3, 3, 4}, `["1","2","a"]`},
+		{fizzbuzz.Config{"a", "b", 4, 3, 4}, `["1","2","a","b"]`},
+		{fizzbuzz.Config{"a", "b", 6, 2, 3}, `["1","a","b","a","5","ab"]`},
+		{fizzbuzz.Config{`"`, "", 1, 1, 1}, `["\""]`},
+		{fizzbuzz.Config{"fizz", "buzz", 13, 3, 4}, `["1","2","fizz","buzz","5","fizz","7","buzz","fizz","10","11","fizzbuzz","13"]`},
+		{fizzbuzz.Default(), `["1","fizz","buzz","fizz","5","fizzbuzz","7","fizz","buzz","fizz"]`},
 	}
 	invalidCases := []testCase{
-		{input: fizzbuzz.Config{-1, -1, -1, "", ""}},
-		{input: fizzbuzz.Config{1, -1, -1, "", ""}},
-		{input: fizzbuzz.Config{1, -1, 1, "", ""}},
-		{input: fizzbuzz.Config{1, 1, -1, "", ""}},
+		{input: fizzbuzz.Config{"", "", -1, -1, -1}},
+		{input: fizzbuzz.Config{"", "", 1, -1, -1}},
+		{input: fizzbuzz.Config{"", "", 1, -1, 1}},
+		{input: fizzbuzz.Config{"", "", 1, 1, -1}},
 	}
 
 	// tests valid cases (WriteTo should not return an error)
@@ -129,7 +130,8 @@ func TestWriteTo(t *testing.T) {
 	// tests invalid cases (WriteTo should return an error)
 	runParallel(t, "fail", func(t *testing.T) {
 		runParallel(t, "closed", func(t *testing.T) {
-			if _, err := fizzbuzz.Default().WriteTo(closed{}); err != errClosed {
+			c := fizzbuzz.Default()
+			if _, err := c.WriteTo((*os.File)(nil)); err != os.ErrInvalid {
 				t.Error("WriteTo should return the writer error, instead it returned:", err)
 			}
 		})
@@ -138,8 +140,8 @@ func TestWriteTo(t *testing.T) {
 		for _, tc := range invalidCases {
 			tc := tc // capture range variable
 			runParallel(t, format(tc.input), func(t *testing.T) {
-				if _, err := output(t, tc.input); !errors.Is(err, fizzbuzz.ErrInvalidInput) {
-					t.Error("WriteTo should return an ErrInvalidInput")
+				if _, err := output(t, tc.input); err == nil {
+					t.Error("WriteTo should return an error")
 				}
 			})
 		}
@@ -148,16 +150,16 @@ func TestWriteTo(t *testing.T) {
 
 func TestLessThan(t *testing.T) {
 	testCases := [][2]fizzbuzz.Config{
-		{{0, 0, 0, "", ""}, {0, 0, 0, "", "a"}},
-		{{0, 0, 0, "", ""}, {0, 0, 0, "a", ""}},
-		{{0, 0, 0, "", ""}, {0, 0, 1, "", ""}},
-		{{0, 0, 0, "", ""}, {0, 1, 0, "", ""}},
-		{{0, 0, 0, "", ""}, {1, 0, 0, "", ""}},
-		{{1, 2, 3, "a", "b"}, {1, 2, 3, "a", "c"}},
-		{{1, 2, 3, "a", "b"}, {2, 3, 4, "z", "z"}},
+		{{"", "", 0, 0, 0}, {"", "a", 0, 0, 0}},
+		{{"", "", 0, 0, 0}, {"a", "", 0, 0, 0}},
+		{{"", "", 0, 0, 0}, {"", "", 0, 0, 1}},
+		{{"", "", 0, 0, 0}, {"", "", 0, 1, 0}},
+		{{"", "", 0, 0, 0}, {"", "", 1, 0, 0}},
+		{{"a", "b", 1, 2, 3}, {"a", "c", 1, 2, 3}},
+		{{"a", "b", 1, 2, 3}, {"z", "z", 2, 3, 4}},
 	}
 	for _, tc := range testCases {
-		if !tc[0].LessThan(&tc[1]) {
+		if !tc[0].LessThan(tc[1]) {
 			t.Error(tc[0], "should be less than", tc[1])
 		}
 	}

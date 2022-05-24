@@ -23,7 +23,7 @@ The server is:
 
 Requirements:
 
-- [Go 1.17 or newer](https://golang.org/dl/)
+- [Go 1.18 or newer](https://golang.org/dl/)
 
 Use this command to directly update and run the service:
 
@@ -131,7 +131,7 @@ The service stops writing values as soon as the API consumer no longer requests 
 | RAM | 32 GB ECC 2666 MHz                               |
 | HDD | HGST HUS726T4TALA6L1                             |
 | OS  | Debian Stable (`scaling_governor = performance`) |
-| Go  | Version 1.17.5                                   |
+| Go  | Version 1.18.2                                   |
 
 [`wrk`](https://github.com/wg/wrk) reports 250151 requests/second with a random limit between 1 and 100 (using `-db off` command-line argument):
 

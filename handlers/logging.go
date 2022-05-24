@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"time"
@@ -17,11 +18,19 @@ func Logger(logger *log.Logger) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			t := time.Now()
 			defer func() {
-				// the colon is guaranteed to be found so the index is always positive
-				ip := r.RemoteAddr[:strings.LastIndexByte(r.RemoteAddr, ':')]
-
+				host, _, _ := net.SplitHostPort(r.RemoteAddr)
+				if header := r.Header.Get("X-Forwarded-For"); header != "" {
+					ips := strings.Split(header, ",")
+					if len(ips) > 0 {
+						firstIP := strings.TrimSpace(ips[0])
+						validIP := net.ParseIP(firstIP) != nil
+						if validIP {
+							host = firstIP
+						}
+					}
+				}
 				secs := float64(time.Since(t)) / float64(time.Second)
-				logger.Println(ip, fmt.Sprintf("%.6fs", secs), r.Method, r.URL)
+				log.Println(host, fmt.Sprintf("%.6fs", secs), r.Method, r.URL)
 			}()
 			h.ServeHTTP(rw, r)
 		})

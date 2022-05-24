@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
 
 	"github.com/xpetit/fizzbuzz/v5"
@@ -16,6 +17,7 @@ func main() {
 	flag.StringVar(&c.Str2, "str2", c.Str2, "Str2 is the string that replaces the number when it is divisible by Int2")
 	flag.Parse()
 	if _, err := c.WriteTo(os.Stdout); err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }

@@ -4,14 +4,19 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/xpetit/x"
 
 	"github.com/xpetit/fizzbuzz/v5/handlers"
 	"github.com/xpetit/fizzbuzz/v5/stats"
@@ -26,43 +31,51 @@ func Main() error {
 	log.SetFlags(log.Ldate | log.Lmicroseconds)
 
 	// Parse config flags
-	dir, err := os.UserConfigDir()
-	if err != nil {
-		return err
-	}
-	defaultDBFile := filepath.Join(dir, "fizzbuzz", "data.db")
-	dbFile := flag.String("db", defaultDBFile, `The path to the SQLite database file. Special values:
-    off         to disable SQLite (stats are kept in memory)
-    :memory:    to get an in-memory SQLite database
-`)
-	flag.Parse()
-
-	// Initialize stats service
-	var statsService stats.Service
-	if *dbFile == "off" {
-		statsService = &stats.Memory{}
-	} else {
-		if !strings.Contains(*dbFile, ":memory:") {
-			if err := os.MkdirAll(filepath.Dir(*dbFile), 0700); err != nil {
-				return err
-			}
-		}
-		statsDB, err := stats.Open(ctx, *dbFile)
+	var (
+		dbFile string
+		host   string
+		port   uint
+	)
+	{
+		dir, err := os.UserConfigDir()
 		if err != nil {
 			return err
 		}
-		defer statsDB.Close()
-		statsService = statsDB
+		defaultDBFile := filepath.Join(dir, "fizzbuzz", "data.db")
+		flag.StringVar(&dbFile, "db", defaultDBFile, x.MultiLines(`
+			The path to the SQLite database file. Special values:
+				off         to disable SQLite (stats are kept in memory)
+				:memory:    to get an in-memory SQLite database
+
+		`))
+		flag.StringVar(&host, "host", "127.0.0.1", "address to bind to")
+		flag.UintVar(&port, "port", 8080, "listening port")
+		flag.Parse()
+	}
+
+	// Initialize stats service
+	var statsService stats.Service
+	if dbFile == "off" {
+		statsService = stats.Memory()
+	} else {
+		if !strings.Contains(dbFile, ":memory:") {
+			if err := os.MkdirAll(filepath.Dir(dbFile), 0o700); err != nil {
+				return err
+			}
+		}
+		db, err := stats.OpenDB(ctx, dbFile)
+		if err != nil {
+			return err
+		}
+		defer db.Close()
+		statsService = db
 	}
 
 	// Configure HTTP server with sane defaults
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
 	api := http.NewServeMux()
+	addr := net.JoinHostPort(host, strconv.Itoa(int(port)))
 	srv := http.Server{
-		Addr:         ":" + port,
+		Addr:         addr,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
@@ -70,7 +83,7 @@ func Main() error {
 	}
 
 	// Configure HTTP routing
-	fb := handlers.Fizzbuzz{Stats: statsService}
+	fb := handlers.Fizzbuzz(statsService)
 	api.HandleFunc("/api/v2/fizzbuzz", fb.Handle)
 	api.HandleFunc("/api/v2/fizzbuzz/stats", fb.HandleStats)
 
@@ -83,18 +96,18 @@ func Main() error {
 	}()
 
 	// Start the HTTP server
-	log.Println("Listening on port:", port, "You can customize it with PORT environment variable")
+	log.Println("Listening on", addr)
 	if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-		return fmt.Errorf("could not listen on port %s: %w", port, err)
+		return fmt.Errorf("listen on port %d: %w", port, err)
 	}
 
 	// Wait for the HTTP server to shutdown
 	if err := <-shutdownErr; err != nil {
-		return fmt.Errorf("could not shutdown HTTP server: %w", err)
+		return fmt.Errorf("shutdown HTTP server: %w", err)
 	}
 
-	if statsDB, ok := statsService.(*stats.DB); ok {
-		return statsDB.Close()
+	if c, ok := statsService.(io.Closer); ok {
+		return c.Close()
 	}
 
 	return nil
