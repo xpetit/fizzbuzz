@@ -36,6 +36,11 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 		return nil, err
 	}
 
+	c, err := sqlite.NewCheckPointer(sqliteDB, 1000)
+	if err != nil {
+		return nil, err
+	}
+
 	// Adjust database/sql settings to SQLite to avoid ever-growing WAL file
 	if strings.Contains(dataSourceName, "memory") {
 		sqliteDB.SetMaxOpenConns(1)
@@ -45,10 +50,7 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 	}
 
 	// Improve SQLite performance
-	if _, err := sqliteDB.ExecContext(ctx, `
-		pragma wal_autocheckpoint = 0;
-		pragma temp_store         = memory;
-	`); err != nil {
+	if _, err := sqliteDB.ExecContext(ctx, `pragma temp_store = memory`); err != nil {
 		return nil, err
 	}
 
@@ -91,7 +93,7 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 			?,
 			1
 		) on conflict do update set
-			"count" = "count" + 1
+			"count" = "count" + 1;
 	`)
 	if err != nil {
 		return nil, err
@@ -124,7 +126,7 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 		ctx:          ctx,
 		db:           sqliteDB,
 		increment:    increment,
-		c:            &sqlite.Checkpointer{DB: sqliteDB, Limit: 1000},
+		c:            c,
 		mostFrequent: mostFrequent,
 	}, nil
 }

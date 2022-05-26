@@ -1,7 +1,9 @@
 github.com/mattn/go-sqlite3 v1.14.13 h1:1tj15ngiFfcZzii7yd82foL+ks+ouQcj8j/TPq3fk1I=
 github.com/mattn/go-sqlite3 v1.14.13/go.mod h1:NyWgC/yNuGj7Q9rpYnZvas74GogHl5/Z4A/KQRfk6bU=
-github.com/xpetit/sqlite v0.0.0-20220526102432-cbab6811af10 h1:ExxEcKGhqR0vxLP4bTUgkCe9lDtXk7k/Amcc45ZTmUA=
-github.com/xpetit/sqlite v0.0.0-20220526102432-cbab6811af10/go.mod h1:rZt01sXJVbrhh1VPtn+w5EoP5MZBnTlLberTXfYOXkw=
+github.com/xpetit/sqlite v0.0.0-20220526105431-f805cc4f32b4 h1:0O85OYsydkL8RuTAs7BRfecsuS4erHZ2i0P9pQ/tOOA=
+github.com/xpetit/sqlite v0.0.0-20220526105431-f805cc4f32b4/go.mod h1:rZt01sXJVbrhh1VPtn+w5EoP5MZBnTlLberTXfYOXkw=
+github.com/xpetit/sqlite v0.0.0-20220526122333-f285f1ec9b40 h1:dgz1b16N8L2w/veLk+w9wkJMVeWNa86rq8ka3VjXSdI=
+github.com/xpetit/sqlite v0.0.0-20220526122333-f285f1ec9b40/go.mod h1:rZt01sXJVbrhh1VPtn+w5EoP5MZBnTlLberTXfYOXkw=
 github.com/xpetit/x v0.1.5 h1:wS9OFYRNgRoGGNEvhKoTNIZ+sMNfvd4ik7cwY69uMWE=
 github.com/xpetit/x v0.1.5/go.mod h1:B+m+S2IDtdSRjxAthf6ii4wmqIPoZFLS+D/O7B9ovsE=
 golang.org/x/exp v0.0.0-20220518171630-0b5c67f07fdf h1:oXVg4h2qJDd9htKxb5SCpFBHLipW6hXmL3qpUixS2jw=
