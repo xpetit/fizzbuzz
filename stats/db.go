@@ -3,13 +3,12 @@ package stats
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"net/url"
 	"runtime"
 	"strings"
-	"sync"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/xpetit/sqlite"
 
 	"github.com/xpetit/fizzbuzz/v5"
 )
@@ -17,6 +16,7 @@ import (
 type db struct {
 	ctx          context.Context
 	db           *sql.DB
+	c            *sqlite.Checkpointer
 	increment    *sql.Stmt
 	mostFrequent *sql.Stmt
 }
@@ -24,7 +24,7 @@ type db struct {
 // OpenDB opens a database holding a persistent and protected (thread safe) hit count.
 // It must be closed when it is no longer needed.
 func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
-	sqlite, err := sql.Open("sqlite3", dataSourceName+"?"+url.Values{
+	sqliteDB, err := sql.Open("sqlite3", dataSourceName+"?"+url.Values{
 		"_busy_timeout":        {"5000"},
 		"_foreign_keys":        {"true"},
 		"_journal_mode":        {"wal"},
@@ -38,14 +38,14 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 
 	// Adjust database/sql settings to SQLite to avoid ever-growing WAL file
 	if strings.Contains(dataSourceName, "memory") {
-		sqlite.SetMaxOpenConns(1)
+		sqliteDB.SetMaxOpenConns(1)
 	} else {
-		sqlite.SetMaxOpenConns(runtime.NumCPU())
-		sqlite.SetMaxIdleConns(runtime.NumCPU())
+		sqliteDB.SetMaxOpenConns(runtime.NumCPU())
+		sqliteDB.SetMaxIdleConns(runtime.NumCPU())
 	}
 
 	// Improve SQLite performance
-	if _, err := sqlite.ExecContext(ctx, `
+	if _, err := sqliteDB.ExecContext(ctx, `
 		pragma wal_autocheckpoint = 0;
 		pragma temp_store         = memory;
 	`); err != nil {
@@ -53,7 +53,7 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 	}
 
 	// Initialize database
-	if _, err := sqlite.ExecContext(ctx, `
+	if _, err := sqliteDB.ExecContext(ctx, `
 		create table if not exists "stat" (
 			"limit" integer not null,
 			"int1"  integer not null,
@@ -75,7 +75,7 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 	}
 
 	// Prepare statements
-	increment, err := sqlite.PrepareContext(ctx, `
+	increment, err := sqliteDB.PrepareContext(ctx, `
 		insert into "stat" (
 			"limit",
 			"int1",
@@ -96,7 +96,7 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 	if err != nil {
 		return nil, err
 	}
-	mostFrequent, err := sqlite.PrepareContext(ctx, `
+	mostFrequent, err := sqliteDB.PrepareContext(ctx, `
 		select
 			"limit",
 			"int1",
@@ -122,37 +122,15 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 
 	return &db{
 		ctx:          ctx,
-		db:           sqlite,
+		db:           sqliteDB,
 		increment:    increment,
+		c:            &sqlite.Checkpointer{DB: sqliteDB, Limit: 1000},
 		mostFrequent: mostFrequent,
 	}, nil
 }
 
-var (
-	i  int
-	m  sync.Mutex
-	wg sync.WaitGroup
-)
-
 func (s *db) Increment(cfg fizzbuzz.Config) error {
-	m.Lock()
-	i++
-	if i == 1000 {
-		i = 0
-		wg.Wait()
-		var failed bool
-		err := s.db.QueryRow(`pragma wal_checkpoint(restart)`).Scan(&failed, new(int), new(int))
-		if err == nil && failed {
-			err = errors.New("pragma wal_checkpoint(restart) failed")
-		}
-		if err != nil {
-			m.Unlock()
-			return err
-		}
-	}
-	m.Unlock()
-	wg.Add(1)
-	defer wg.Done()
+	defer s.c.Checkpoint()()
 
 	_, err := s.increment.ExecContext(s.ctx,
 		cfg.Limit,
