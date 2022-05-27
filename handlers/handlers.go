@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 
 	"github.com/xpetit/fizzbuzz/v5"
@@ -47,10 +48,22 @@ func (fb handlers) Handle(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	values, err := url.ParseQuery(r.URL.RawQuery)
+	if err != nil {
+		jsonErr(rw, err.Error(), http.StatusBadRequest)
+		return
+	}
+	for key := range values {
+		switch key {
+		case "int1", "int2", "limit", "str1", "str2":
+		default:
+			jsonErr(rw, "unknown query parameter: "+key, http.StatusBadRequest)
+			return
+		}
+	}
+
 	// parse query parameters with default values
 	c := fizzbuzz.Default()
-	values := r.URL.Query()
-
 	intValues := map[string]*int{
 		"int1":  &c.Int1,
 		"int2":  &c.Int2,

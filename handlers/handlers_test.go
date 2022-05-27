@@ -113,7 +113,7 @@ func TestFizzbuzz(t *testing.T) {
 		get(nil, fb.Handle)
 
 		// Make sure that HandleStats always return the same output for Fizzbuzz configs with the same count
-		for i := 0; i < 100; i++ {
+		for i := 0; i < 10; i++ {
 			i := i // capture range variable
 			runParallel(t, strconv.Itoa(i), func(t *testing.T) {
 				expected := `{"most_frequent":{"config":{"str1":"a","str2":"b","limit":6,"int1":2,"int2":3},"count":1}}`
