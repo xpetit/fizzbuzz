@@ -21,23 +21,6 @@ type Config struct {
 // ErrInvalidInput is returned by WriteTo when attempting to write an invalid config (negative or zero Int1/Int2).
 var ErrInvalidInput = errors.New("invalid input")
 
-// LessThan compares each exported field to determine which config is the "smallest".
-func (a Config) LessThan(b Config) bool {
-	if a.Limit != b.Limit {
-		return a.Limit < b.Limit
-	}
-	if a.Int1 != b.Int1 {
-		return a.Int1 < b.Int1
-	}
-	if a.Int2 != b.Int2 {
-		return a.Int2 < b.Int2
-	}
-	if a.Str1 != b.Str1 {
-		return a.Str1 < b.Str1
-	}
-	return a.Str2 < b.Str2
-}
-
 // Default returns a default configuration that gives all possible types of Fizz buzz values.
 func Default() Config {
 	return Config{

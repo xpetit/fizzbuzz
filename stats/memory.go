@@ -25,11 +25,27 @@ func (s *memory) Increment(cfg fizzbuzz.Config) error {
 	return nil
 }
 
+func smaller(a, b fizzbuzz.Config) bool {
+	if a.Limit != b.Limit {
+		return a.Limit < b.Limit
+	}
+	if a.Int1 != b.Int1 {
+		return a.Int1 < b.Int1
+	}
+	if a.Int2 != b.Int2 {
+		return a.Int2 < b.Int2
+	}
+	if a.Str1 != b.Str1 {
+		return a.Str1 < b.Str1
+	}
+	return a.Str2 < b.Str2
+}
+
 func (s *memory) MostFrequent() (count int, cfg fizzbuzz.Config, err error) {
 	s.mu.RLock()
 	for config, c := range s.m {
 		// the configs with same count are differentiated because the "iteration order over maps is not specified" (Go spec)
-		if c > count || c == count && config.LessThan(cfg) {
+		if c > count || c == count && smaller(config, cfg) {
 			count = c
 			cfg = config
 		}
