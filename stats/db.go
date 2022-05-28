@@ -24,7 +24,10 @@ type db struct {
 // OpenDB opens a database holding a persistent and protected (thread safe) hit count.
 // It must be closed when it is no longer needed.
 func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
-	sqliteDB, err := sql.Open("sqlite3", dataSourceName+"?"+url.Values{
+	db := &db{ctx: ctx}
+	var err error
+
+	db.db, err = sql.Open("sqlite3", dataSourceName+"?"+url.Values{
 		"_busy_timeout":        {"5000"},
 		"_foreign_keys":        {"true"},
 		"_journal_mode":        {"wal"},
@@ -36,26 +39,26 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 		return nil, err
 	}
 
-	c, err := sqlite.NewCheckPointer(sqliteDB, 1000)
-	if err != nil {
-		return nil, err
-	}
-
 	// Adjust database/sql settings to SQLite to avoid ever-growing WAL file
 	if strings.Contains(dataSourceName, "memory") {
-		sqliteDB.SetMaxOpenConns(1)
+		db.db.SetMaxOpenConns(1)
 	} else {
-		sqliteDB.SetMaxOpenConns(runtime.NumCPU())
-		sqliteDB.SetMaxIdleConns(runtime.NumCPU())
+		db.db.SetMaxOpenConns(runtime.NumCPU())
+		db.db.SetMaxIdleConns(runtime.NumCPU())
+
+		db.c, err = sqlite.NewCheckPointer(db.db, 1000)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// Improve SQLite performance
-	if _, err := sqliteDB.ExecContext(ctx, `pragma temp_store = memory`); err != nil {
+	if _, err := db.db.ExecContext(ctx, `pragma temp_store = memory`); err != nil {
 		return nil, err
 	}
 
 	// Initialize database
-	if _, err := sqliteDB.ExecContext(ctx, `
+	if _, err := db.db.ExecContext(ctx, `
 		create table if not exists "stat" (
 			"limit" integer not null,
 			"int1"  integer not null,
@@ -77,7 +80,7 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 	}
 
 	// Prepare statements
-	increment, err := sqliteDB.PrepareContext(ctx, `
+	db.increment, err = db.db.PrepareContext(ctx, `
 		insert into "stat" (
 			"limit",
 			"int1",
@@ -98,7 +101,7 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 	if err != nil {
 		return nil, err
 	}
-	mostFrequent, err := sqliteDB.PrepareContext(ctx, `
+	db.mostFrequent, err = db.db.PrepareContext(ctx, `
 		select
 			"limit",
 			"int1",
@@ -122,17 +125,13 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 		return nil, err
 	}
 
-	return &db{
-		ctx:          ctx,
-		db:           sqliteDB,
-		increment:    increment,
-		c:            c,
-		mostFrequent: mostFrequent,
-	}, nil
+	return db, nil
 }
 
 func (s *db) Increment(cfg fizzbuzz.Config) error {
-	defer s.c.Checkpoint()()
+	if s.c != nil {
+		defer s.c.Checkpoint()()
+	}
 
 	_, err := s.increment.ExecContext(s.ctx,
 		cfg.Limit,
