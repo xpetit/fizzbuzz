@@ -33,7 +33,8 @@ RUN adduser -u 10000 -D user
 USER user:user
 
 # Copy binary
-ENTRYPOINT ["/app/fizzbuzzd", "--host", "0.0.0.0"]
+ENTRYPOINT ["/app/fizzbuzzd"]
+CMD ["--host", "0.0.0.0"]
 COPY --from=builder /app/fizzbuzzd /app/fizzbuzzd
 
 EXPOSE 8080/tcp
