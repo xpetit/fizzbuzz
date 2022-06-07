@@ -29,7 +29,7 @@ FROM alpine
 
 # Create unprivileged user for the service
 # -D: Don't assign a password
-RUN adduser -D user
+RUN adduser -u 10000 -D user
 USER user:user
 
 # Copy binary
