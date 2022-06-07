@@ -1,7 +1,5 @@
 # FizzBuzz
 
-![coverage](./coverage.svg)
-
 FizzBuzz is a Golang HTTP server exposing a RESTful web API that provides a [Fizz buzz](https://en.wikipedia.org/wiki/Fizz_buzz) service.
 
 It has two endpoints:
