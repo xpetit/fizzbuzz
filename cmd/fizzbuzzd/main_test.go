@@ -35,7 +35,7 @@ func equal[T comparable](t *testing.T, descr string, got, want T) {
 	}
 }
 
-func test(t *testing.T, c main.Config) {
+func testMain(t *testing.T, c main.Config) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -69,11 +69,7 @@ func test(t *testing.T, c main.Config) {
 
 	for { // Wait for the HTTP server to be ready
 		time.Sleep(100 * time.Millisecond)
-		code, _, err := request("GET", "ready")
-		if err != nil {
-			continue
-		}
-		if code == http.StatusOK {
+		if code, _, _ := request("GET", "ready"); code == http.StatusOK {
 			break
 		}
 	}
@@ -263,13 +259,13 @@ func TestMain(t *testing.T) {
 	addr := "127.0.0.1:" + port
 	switch {
 	case !t.Run("map", func(t *testing.T) {
-		test(t, main.Config{Addr: addr, DBFile: "off"})
+		testMain(t, main.Config{Addr: addr, DBFile: "off"})
 	}):
 	case !t.Run("memory_DB", func(t *testing.T) {
-		test(t, main.Config{Addr: addr, DBFile: ":memory:"})
+		testMain(t, main.Config{Addr: addr, DBFile: ":memory:"})
 	}):
 	case !t.Run("file_DB", func(t *testing.T) {
-		test(t, main.Config{Addr: addr, DBFile: filepath.Join(t.TempDir(), "data.db")})
+		testMain(t, main.Config{Addr: addr, DBFile: filepath.Join(t.TempDir(), "data.db")})
 	}):
 	}
 }
