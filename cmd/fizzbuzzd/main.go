@@ -16,8 +16,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/xpetit/x"
-
 	"github.com/xpetit/fizzbuzz/v5/handlers"
 	"github.com/xpetit/fizzbuzz/v5/stats"
 )
@@ -104,12 +102,10 @@ func run() error {
 		return err
 	}
 	defaultDBFile := filepath.Join(dir, "fizzbuzz", "data.db")
-	flag.StringVar(&c.DBFile, "db", defaultDBFile, x.MultiLines(`
-		The path to the SQLite database file. Special values:
-			off         to disable SQLite (stats are kept in memory)
-			:memory:    to get an in-memory SQLite database
-
-	`))
+	flag.StringVar(&c.DBFile, "db", defaultDBFile, `The path to the SQLite database file. Special values:
+	off         to disable SQLite (stats are kept in memory)
+	:memory:    to get an in-memory SQLite database
+`)
 	flag.StringVar(&host, "host", "127.0.0.1", "address to bind to")
 	flag.IntVar(&port, "port", 8080, "listening port")
 	flag.Parse()
