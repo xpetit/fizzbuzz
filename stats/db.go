@@ -82,12 +82,12 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 			"str2",
 			"count"
 		) values (
-			?,
-			?,
-			?,
-			?,
-			?,
-			1
+			?, -- limit
+			?, -- int1
+			?, -- int2
+			?, -- str1
+			?, -- str2
+			1  -- count
 		) on conflict do update set
 			"count" = "count" + 1;
 	`)
