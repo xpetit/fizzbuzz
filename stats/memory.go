@@ -7,8 +7,8 @@ import (
 )
 
 type memory struct {
-	mu sync.RWMutex
 	m  map[fizzbuzz.Config]int
+	mu sync.RWMutex
 }
 
 // Memory holds a protected (thread safe) hit count.

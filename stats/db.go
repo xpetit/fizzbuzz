@@ -31,7 +31,7 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 		"_journal_mode":        {"wal"},
 		"_synchronous":         {"normal"},
 		"_case_sensitive_like": {"true"},
-		"_cache_size":          {"-512000"},
+		"_cache_size":          {"10000"},
 	}.Encode())
 	if err != nil {
 		return nil, err
