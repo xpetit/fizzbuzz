@@ -3,7 +3,6 @@ package stats_test
 import (
 	"context"
 	"math/rand"
-	"path/filepath"
 	"testing"
 
 	"github.com/xpetit/fizzbuzz/v5"
@@ -35,7 +34,7 @@ func Benchmark(b *testing.B) {
 		}
 	})
 
-	db, err := stats.OpenDB(context.Background(), filepath.Join(b.TempDir(), "data.db"))
+	db, err := stats.OpenDB(context.Background(), ":memory:")
 	if err != nil {
 		b.Fatal("failed to open database:", err)
 	}
