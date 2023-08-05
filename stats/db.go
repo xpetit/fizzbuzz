@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/xpetit/sqlite"
 
 	"github.com/xpetit/fizzbuzz/v5"
 )
@@ -16,7 +15,6 @@ import (
 type db struct {
 	ctx          context.Context
 	db           *sql.DB
-	c            *sqlite.Checkpointer
 	increment    *sql.Stmt
 	mostFrequent *sql.Stmt
 }
@@ -45,11 +43,6 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 	} else {
 		db.db.SetMaxOpenConns(runtime.NumCPU())
 		db.db.SetMaxIdleConns(runtime.NumCPU())
-
-		db.c, err = sqlite.NewCheckPointer(db.db, 1000)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	// Improve SQLite performance
@@ -129,10 +122,6 @@ func OpenDB(ctx context.Context, dataSourceName string) (*db, error) {
 }
 
 func (s *db) Increment(cfg fizzbuzz.Config) error {
-	if s.c != nil {
-		defer s.c.Checkpoint()()
-	}
-
 	_, err := s.increment.ExecContext(s.ctx,
 		cfg.Limit,
 		cfg.Int1,
