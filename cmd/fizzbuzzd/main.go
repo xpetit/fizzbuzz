@@ -21,8 +21,9 @@ import (
 )
 
 type Config struct {
-	DBFile string
-	Addr   string
+	DBFile  string
+	Addr    string
+	logging bool
 }
 
 func (c *Config) Run(ctx context.Context) error {
@@ -53,10 +54,13 @@ func (c *Config) Run(ctx context.Context) error {
 	api.HandleFunc("/api/v2/ready", func(http.ResponseWriter, *http.Request) {})
 	srv := http.Server{
 		Addr:         c.Addr,
-		Handler:      handlers.Logger(log.Default())(api),
+		Handler:      api,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  120 * time.Second,
+	}
+	if c.logging {
+		srv.Handler = handlers.Logger(log.Default())(srv.Handler)
 	}
 
 	// Spawn a goroutine that waits for a termination signal and then stops the HTTP server
@@ -102,6 +106,7 @@ func run() error {
 		return err
 	}
 	defaultDBFile := filepath.Join(dir, "fizzbuzz", "data.db")
+	flag.BoolVar(&c.logging, "logging", true, "Enable HTTP logging")
 	flag.StringVar(&c.DBFile, "db", defaultDBFile, `The path to the SQLite database file. Special values:
 	off         to disable SQLite (stats are kept in memory)
 	:memory:    to get an in-memory SQLite database
