@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"math"
 	"strconv"
 )
 
@@ -35,6 +34,33 @@ func Default() Config {
 // Ensure type implements interface.
 var _ io.WriterTo = (*Config)(nil)
 
+// asIs returns whether the string can be copied as is (no characters to escape)
+func asIs(s string) bool {
+	for _, c := range []byte(s) {
+		if c < 32 || c > 126 || c == '"' || c == '\\' {
+			return false
+		}
+	}
+	return true
+}
+
+func marshalJSON(s string) (b []byte) {
+	if asIs(s) {
+		b = make([]byte, 0, len(s)+2)
+		b = append(b, '"')
+		b = append(b, s...)
+		b = append(b, '"')
+	} else {
+		b, _ = json.Marshal(s) // it is safe to ignore the error because a string cannot cause one
+	}
+	return
+}
+
+var (
+	empty = []byte("[]\n")
+	end   = []byte("]\n")
+)
+
 // WriteTo writes a list of Fizz buzz values as a JSON array of strings, followed by a newline character.
 //
 // Attempting to write a Fizz buzz with negative or zero divisors causes WriteTo to return an ErrInvalidInput.
@@ -58,7 +84,7 @@ func (c *Config) WriteTo(w io.Writer) (n int64, err error) {
 
 	if c.Limit < 1 {
 		// Fizz buzz starts with 1, so return an empty array
-		write([]byte("[]\n"))
+		write(empty)
 		return
 	}
 
@@ -67,9 +93,8 @@ func (c *Config) WriteTo(w io.Writer) (n int64, err error) {
 		return
 	}
 
-	// Marshal JSON strings, it is safe to ignore the error because a string cannot cause one
-	s1, _ := json.Marshal(c.Str1)
-	s2, _ := json.Marshal(c.Str2)
+	s1 := marshalJSON(c.Str1)
+	s2 := marshalJSON(c.Str2)
 
 	// Instead of marshalling str1+str2, reuse the previous JSON strings, without the quotes
 	s12 := make([]byte, 0, len(s1)-1+len(s2)-1) // Allocate a slice big enough to contain s1 and s2 without the quotes
@@ -83,10 +108,7 @@ func (c *Config) WriteTo(w io.Writer) (n int64, err error) {
 	intBuf := make([]byte, 0, 19)
 
 	// Iterate over all Fizz buzz values and write them one by one
-	for i := 1; i <= c.Limit; i++ {
-		// Truncate the slice while keeping the underlying storage intact to avoid unnecessary memory allocations
-		buf = buf[:0]
-
+	for i := 1; ; i++ {
 		if i%c.Int1 == 0 {
 			if i%c.Int2 == 0 {
 				// i is divisible by both Int1 and Int2, append Str1+Str2 JSON string
@@ -115,12 +137,15 @@ func (c *Config) WriteTo(w io.Writer) (n int64, err error) {
 			return
 		}
 
-		// This prevents overflow
-		if i == math.MaxInt {
+		if i == c.Limit {
 			break
 		}
+
+		// Truncate the slice while keeping the underlying storage intact to avoid unnecessary memory allocations
+		buf = buf[:0]
 	}
+
 	// Close JSON array and add a newline to be consistent with (*json.Encoder).Encode
-	write([]byte("]\n"))
+	write(end)
 	return
 }
