@@ -3,7 +3,7 @@
 # For more information, please visit: https://docs.docker.com/language/golang/build-images
 
 # Leverage multi-stage build to reduce the final Docker image size
-FROM golang:1.18-alpine as builder
+FROM golang:1.20-alpine as builder
 
 # needed for cgo github.com/mattn/go-sqlite3 dependency
 RUN apk add --no-cache build-base
