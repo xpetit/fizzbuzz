@@ -21,7 +21,7 @@ The server is:
 
 Requirements:
 
-- [Go 1.18 or newer](https://golang.org/dl/)
+- [Go 1.20 or newer](https://golang.org/dl/)
 
 Use this command to directly update and run the service:
 
