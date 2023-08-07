@@ -107,65 +107,67 @@ The top-down list of dependencies is as follows:
 
 ### Performance
 
+Benchmarks performed on an AWS EC2 instance (c6i.4xlarge) with the following specs:
+
+|     |                                        |
+| --- | -------------------------------------- |
+| CPU | Intel Xeon Platinum 8375C CPU @2.90GHz |
+| RAM | 32 GB ECC 2666 MHz                     |
+| Go  | Version 1.20.5                         |
+
+The programs were compiled with `GOAMD64=v4` and ran with `GOGC=1000` environment variables.
+
 `WriteTo` limits memory allocation, here are the results from 0 to 10 million values of Fizz buzz:
 
 ```
-BenchmarkWriteTo/[limit:0e+00]-12   100000000          11 ns/op   268.82 MB/s     3 B/op   1 allocs/op
-BenchmarkWriteTo/[limit:1e+00]-12     3801452         314 ns/op    19.12 MB/s    80 B/op   8 allocs/op
-BenchmarkWriteTo/[limit:1e+01]-12     2356630         509 ns/op   131.71 MB/s    96 B/op   9 allocs/op
-BenchmarkWriteTo/[limit:1e+02]-12      564086        2141 ns/op   325.50 MB/s    96 B/op   9 allocs/op
-BenchmarkWriteTo/[limit:1e+03]-12       55982       19697 ns/op   370.47 MB/s    96 B/op   9 allocs/op
-BenchmarkWriteTo/[limit:1e+04]-12        6004      195040 ns/op   391.19 MB/s    96 B/op   9 allocs/op
-BenchmarkWriteTo/[limit:1e+05]-12         589     1999506 ns/op   398.25 MB/s    98 B/op   9 allocs/op
-BenchmarkWriteTo/[limit:1e+06]-12          57    20156702 ns/op   411.59 MB/s   123 B/op   9 allocs/op
-BenchmarkWriteTo/[limit:1e+07]-12           5   205326151 ns/op   420.29 MB/s   408 B/op   9 allocs/op
+BenchmarkWriteTo/[limit:0e+00]-16   271018197       4.431 ns/op   677.05 MB/s    0 B/op   0 allocs/op
+BenchmarkWriteTo/[limit:1e+00]-16    11806252       99.79 ns/op    60.13 MB/s   32 B/op   5 allocs/op
+BenchmarkWriteTo/[limit:1e+01]-16     5970025       200.2 ns/op   334.67 MB/s   48 B/op   6 allocs/op
+BenchmarkWriteTo/[limit:1e+02]-16     1000000        1016 ns/op   685.71 MB/s   48 B/op   6 allocs/op
+BenchmarkWriteTo/[limit:1e+03]-16      114363       10508 ns/op   694.45 MB/s   48 B/op   6 allocs/op
+BenchmarkWriteTo/[limit:1e+04]-16       10000      106170 ns/op   718.63 MB/s   48 B/op   6 allocs/op
+BenchmarkWriteTo/[limit:1e+05]-16        1074     1113399 ns/op   715.19 MB/s   48 B/op   6 allocs/op
+BenchmarkWriteTo/[limit:1e+06]-16         100    11305590 ns/op   733.82 MB/s   48 B/op   6 allocs/op
+BenchmarkWriteTo/[limit:1e+07]-16           9   117342031 ns/op   735.43 MB/s   49 B/op   6 allocs/op
 ```
 
 The service stops writing values as soon as the API consumer no longer requests them.
 
-|     |                                                  |
-| --- | ------------------------------------------------ |
-| CPU | Intel Xeon E-2236 CPU @3.40GHz                   |
-| RAM | 32 GB ECC 2666 MHz                               |
-| HDD | HGST HUS726T4TALA6L1                             |
-| OS  | Debian Stable (`scaling_governor = performance`) |
-| Go  | Version 1.18.2                                   |
-
-[`wrk`](https://github.com/wg/wrk) reports 250151 requests/second with a random limit between 1 and 100 (using `-db off` command-line argument):
+[`wrk`](https://github.com/wg/wrk) reports 447k requests/second with a random limit between 1 and 100 (using `-db off` command-line argument):
 
 ```
-Running 10s test @ http://localhost:8080/api/v2/fizzbuzz?limit=param_value
-  4 threads and 400 connections
+Running 10s test @ http://127.0.0.1:8080
+  5 threads and 600 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     2.02ms    3.25ms  44.49ms   89.50%
-    Req/Sec    63.27k    14.84k   86.27k    57.83%
-  2517462 requests in 10.06s, 1.11GB read
-Requests/sec: 250150.61
-Transfer/sec:    113.18MB
+    Latency     1.45ms    1.85ms  47.51ms   90.65%
+    Req/Sec    90.68k     7.72k  111.89k    68.94%
+  4511934 requests in 10.10s, 1.86GB read
+Requests/sec: 446918.14
+Transfer/sec:    188.49MB
 ```
 
 Leaving the database enabled:
 
 ```
-Running 10s test @ http://localhost:8080/api/v2/fizzbuzz?limit=param_value
+Running 10s test @ http://127.0.0.1:8080
   4 threads and 400 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency    64.81ms  111.41ms   1.07s    88.31%
-    Req/Sec     4.49k   536.42     6.13k    81.00%
-  178542 requests in 10.03s, 80.75MB read
-Requests/sec:  17803.49
-Transfer/sec:      8.05MB
+    Latency    39.17ms   70.20ms 770.02ms   88.86%
+    Req/Sec     7.81k   636.24    10.35k    76.25%
+  310796 requests in 10.02s, 131.31MB read
+Requests/sec:  31002.22
+Transfer/sec:     13.10MB
 ```
 
 And with `-db :memory:` command-line argument ([SQLite in-memory DB](https://www.sqlite.org/inmemorydb.html)):
 
 ```
-Running 10s test @ http://localhost:8080/api/v2/fizzbuzz?limit=param_value
-  4 threads and 400 connections
+Running 10s test @ http://127.0.0.1:8080
+  2 threads and 10 connections
   Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency    40.36ms   69.36ms 686.09ms   88.09%
-    Req/Sec     7.41k   558.16     8.96k    68.75%
-  295090 requests in 10.03s, 133.64MB read
-Requests/sec:  29427.95
-Transfer/sec:     13.33MB
+    Latency   242.48us  189.82us   2.21ms   86.00%
+    Req/Sec    22.80k   635.84    24.37k    65.84%
+  458245 requests in 10.10s, 193.35MB read
+Requests/sec:  45371.08
+Transfer/sec:     19.14MB
 ```
